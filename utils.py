@@ -128,7 +128,7 @@ def load_gene_mtx(dataset_name, transform = True, count = True, actv = 'sig'):
     print('came in load_gene')
     B = "tech"
     C = "celltype"
-    data, labels, batch_info_enc, batch_info = read_h5ad(data_name, B, C)
+    data, labels, batch_info_enc, batch_info = read_h5ad(dataset_name, B, C)
          
     if count == False:
         data = np.log2(data+1)

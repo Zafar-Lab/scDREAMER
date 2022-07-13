@@ -126,7 +126,6 @@ def read_h5ad(data_path, batch, cell_type=None,hvg=2000):
 
 def load_gene_mtx(dataset_name, transform = True, count = True, actv = 'sig'):
     print('came in load_gene')
-    data_name = "/home/krushna/Documents/Data_integration/SCRNA_Datasets/All_h5ad/Pancreas.h5ad"
     B = "tech"
     C = "celltype"
     data, labels, batch_info_enc, batch_info = read_h5ad(data_name, B, C)

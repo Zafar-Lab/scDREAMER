@@ -49,7 +49,7 @@ def zinb_model(self, x, mean, inverse_dispersion, logit, eps=1e-4):
     return tf.reduce_sum(expr, axis=-1)
 
     
-def eval_cluster_on_test(self):
+def eval_cluster_on_test(self,ep):
     # Embedding points in the test data to the latent space
     inp_encoder = self.data_test
     labels = self.labels_test
@@ -69,7 +69,7 @@ def eval_cluster_on_test(self):
     img = sc.pl.umap(Ann, color = 'group', frameon = False) # cells
     print(img)
     
-    np.savetxt('latent_matrix_c.csv', latent_matrix, delimiter=",")
+    np.savetxt('latent_matrix_c'+ep+'.csv', latent_matrix, delimiter=",")
     
     Ann.obs['batch'] = self.batch_info.astype(str)
     img2 = sc.pl.umap(Ann, color = 'batch', frameon = False)

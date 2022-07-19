@@ -9,6 +9,11 @@ Ajita Shree, Musale Krushna Pavan, Hamim Zafar. scDREAMER: atlas-level integrati
 
 ## Installation
 
+scDREAMER can be installed as follows  <br />
+!git clone https://github.com/Zafar-Lab/scDREAMER.git <br />
+%cd scDREAMER/scDREAMER <br />
+
+Package versions: <br />
 numpy == 1.21.5 <br />
 pandas == 1.3.5 <br />
 scanpy == 1.9.1 <br />
@@ -19,5 +24,5 @@ tensorflow == 1.15.0 <br />
 python == 3.7 <br />
 
 ## Tutorials
-Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER. <br />
-Tutorial Link: (https://colab.research.google.com/drive/1UQ3pLd9UgSgsR8TqRFVWuYBy-doZpy2K?usp=sharing)
+Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER. <br /> <br />
+Tutorial Link: (https://colab.research.google.com/drive/1UQ3pLd9UgSgsR8TqRFVWuYBy-doZpy2K?usp=sharing) <br />

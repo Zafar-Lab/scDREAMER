@@ -19,5 +19,5 @@ tensorflow == 1.15.0 <br />
 python == 3.7 <br />
 
 ## Tutorials
-Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER. 
-https://drive.google.com/file/d/1kLGBv9osnMMG6zbg9_45UfvGeobji8t-/view?usp=sharing
+Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER. <br />
+Tutorial Link: (https://colab.research.google.com/drive/1UQ3pLd9UgSgsR8TqRFVWuYBy-doZpy2K?usp=sharing)

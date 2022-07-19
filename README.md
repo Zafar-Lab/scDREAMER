@@ -1,3 +1,13 @@
 # scDREAMER
-## Abstract
-Integration of heterogeneous single-cell sequencing datasets generated across multiple tissue locations, time and conditions is essential for a comprehensive understanding of the cellular statesand expression programs underlying complex biological systems. Here, we present scDREAMER (https://github.com/Zafar-Lab/scDREAMER), a novel data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. Using five real benchmarking datasets, we demonstrated that scDREAMER can overcome critical challenges including the presence of skewed cell types among batches, nested batch effects, large number of batches and conservation of development trajectory across different batches. Moreover, our benchmarking demonstrated that scDREAMER outperformed state-of-the-art methods in batch-correction and conservation of biological variation. Using a 1 million cells dataset, we further showed that scDREAMER is scalable and can perform atlas-level integration across species (e.g., human and mouse) while being faster than other deep-learning-based methods
+## Overview
+**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. See our preprint below for more details. 
+
+<img src='architecture.png'>
+
+## Cite this article
+Ajita Shree, Musale Krushna Pavan, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1101/2022.07.12.499846 
+
+## Installation
+
+## Tutorials
+Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER. 

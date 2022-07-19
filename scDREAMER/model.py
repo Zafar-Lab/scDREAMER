@@ -64,18 +64,14 @@ def build_model(self):
     local_l_variance = self.library_size_variance
 
     self.decoder_output2 = tf.nn.sigmoid(dense(self.decoder_output, self.g_h_dim[0], self.X_dim, 'dec_output2'))  
-    
-    # Discriminator D1....
-    self.dis_real_logit = self.discriminator(self.real_distribution, self.z_dim) # random z from Gaussina distribution ...
-    self.dis_fake_logit = self.discriminator(self.z, self.z_dim, reuse=True)  # z distribution coming from encoder...network 
-    
+  
     # Discriminator D2
     self.dis2_real_logit = self.discriminator2(self.x_target, self.X_dim) # True data
     self.dis2_fake_logit = self.discriminator2(self.decoder_output2, self.X_dim, reuse=True) # from decoder network
     
     # Discriminator D_batch : discriminate between different batches info
     # pass the encoded data; self.x_target, self.X_dim
-    self.disb_real_logit = self.discriminatorB(self.z, self.z_dim) # True data
+    self.disb_real_logit = self.batchClassifier(self.z, self.z_dim) # True data
     
     # Reconstruction loss 
     capL = 1e-4 #1e-8
@@ -83,7 +79,6 @@ def build_model(self):
 
     #recon_loss = 0
     recon_loss = self.zinb_model(self.expression, self.x_post_rate, local_dispersion, self.x_post_dropout)
-    #recon_loss = tf.reduce_mean(tf.square(tf.subtract( self.decoder_output2, self.x_input)))
     
     self.kl_gauss_l = 0.5 * tf.reduce_sum(- tf.log(tf.math.minimum(tf.math.maximum(self.l_post_v, capL), capU))  \
                                       + self.l_post_v/local_l_variance \
@@ -99,35 +94,25 @@ def build_model(self):
     #self.ELBO_gauss = tf.reduce_mean(recon_loss - self.kl_gauss_l - self.kl_scale * self.kl_gauss_z) - tf.reduce_sum(tf.pow(self.z - self.z_, 2)) 
     self.ELBO_gauss = tf.reduce_mean(recon_loss - self.kl_scale*self.kl_gauss_l - self.kl_scale*self.kl_gauss_z) - self.kl_scale*tf.reduce_sum(tf.pow(self.z - self.z_, 2)) 
 
-    #tf.reduce_sum(tf.math.sqrt(self.z - self.z_)) #tf.reduce_sum(tf.pow(self.z - self.z_, 2))
     
     # - is added to ELBO because we maximize the ELBO expression & maximize classifier cross entropy loss -> -loss minimize cross entropy
     self.autoencoder_loss = - self.ELBO_gauss - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.disb_real_logit, labels = self.batch_input)) - tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis2_real_logit/tf.reduce_sum(self.dis2_real_logit)* self.dis2_fake_logit/tf.reduce_sum(self.dis2_fake_logit)))), capL), capU))                    
-          
-    # Discriminator D1: minimize distance   min max objective function - BD distance between z (random sample) and generated z sample from encoder
-    self.dis_loss = - tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis_real_logit/tf.reduce_sum(self.dis_real_logit)
-                                        * self.dis_fake_logit/tf.reduce_sum(self.dis_fake_logit)))), capL), capU)) 
-            
+                   
     # Discriminator D2: minimize distance min max objective function - BD distance between X(generated sample) and X input 
     self.dis2_loss = tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis2_real_logit/tf.reduce_sum(self.dis2_real_logit)
                                         * self.dis2_fake_logit/tf.reduce_sum(self.dis2_fake_logit)))), capL), capU)) # epsilon added to avoid Nan
     
-    # Generator loss - D(z) {D(E(X_real))}  - D1 label will be 1; they are trying to maximize the 
-    self.generator_loss = - tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis_fake_logit/tf.reduce_sum(self.dis_fake_logit)) )), capL), capU)) 
-
-            
+         
     # 27Apr: AJ : minimize binary cross entropy     
     self.disb_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.disb_real_logit, labels = self.batch_input)) #self.batch_input
     
     t_vars = tf.trainable_variables()
-    self.dis_vars = [var for var in t_vars if 'dis_' in var.name]
     self.gen_vars = [var for var in t_vars if 'enc_' in var.name or 'dec_' in var.name] #AS:2109
 
     # Discriminator D2
     self.dis2_vars = [var for var in t_vars if 'dis2_' in var.name] #or 'enc_' in var.name or 'dec_' in var.name]
     
     # Discriminator DB: AJ
-    #self.disb_vars = [var for var in t_vars if 'disb_' in var.name]
     self.disb_vars = [var for var in t_vars if 'disb_' in var.name ]
 
     self.saver = tf.train.Saver()
@@ -136,22 +121,9 @@ def train_cluster(self):
 
     print('Cluster DRA on DataSet {} ... '.format(self.dataset_name))
 
-    #tf.train.Optimizer
-    #autoencoder_optimizer = tf.keras.optimizers.SGD(learning_rate=0.1).minimize(self.autoencoder_loss, var_list = self.gen_vars)
-    #autoencoder_optimizer = tf.train.GradientDescentOptimizer(learning_rate = self.lr).minimize(self.autoencoder_loss)
-
     # learning_rate=self.lr,beta1=self.beta1 #0.0002
     autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate=0.0002,beta1=self.beta1).minimize(self.autoencoder_loss) # self.disb_vars, var_list = self.gen_vars
 
-    # Not used at the moment....
-    #autoencoder_optimizer2 = tf.train.AdamOptimizer(learning_rate=self.lr,
-    #                                               beta1=self.beta1).minimize( self.autoencoder_loss) # self.disb_vars
-
-    discriminator_optimizer = tf.train.AdamOptimizer(learning_rate=self.lr,
-                                                      beta1=self.beta1).minimize(self.dis_loss,
-                                                                                  var_list=self.dis_vars)
-    generator_optimizer = tf.train.AdamOptimizer(learning_rate=self.lr,
-                                                  beta1=self.beta1).minimize(self.generator_loss,var_list=self.gen_vars)
     # Discriminator D2
     discriminator2_optimizer = tf.train.AdamOptimizer(learning_rate=self.lr,
                                                       beta1=self.beta1).minimize(self.dis2_loss,
@@ -159,7 +131,7 @@ def train_cluster(self):
     
     # Discriminator batch: Classifier....
     
-    discriminatorb_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr,
+    batchClassifier_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr,
                                               beta1 = self.beta1).minimize(self.disb_loss, var_list = self.disb_vars)
     
     self.sess.run(tf.global_variables_initializer())
@@ -202,27 +174,7 @@ def train_cluster(self):
                                                       self.batch_input: X_, # batch_b
                                                       self.keep_prob: self.keep_param}) 
   
-                
-            #if np.mod(it, control) == 0: 
-
-            '''
-            _, d_loss_curr = self.sess.run([discriminator_optimizer, self.dis_loss],
-                feed_dict={self.x_input: batch_x,
-                            self.batch_input: X_,
-                self.real_distribution: batch_z_real_dist,
-                self.x_input_: batch_x_, self.batch_input_: X_,
-                self.keep_prob: self.keep_param})    
-            '''
-            
-            '''                                          
-            else: 
-                
-                _, g_loss_curr = self.sess.run([generator_optimizer, self.generator_loss], 
-                    feed_dict={self.x_input: batch_x, self.x_target: batch_x, self.keep_prob: self.keep_param, 
-                               self.x_input_: batch_x_, self.batch_input_: X_,
-                               self.batch_input: X_, self.real_distribution: batch_z_real_dist}) #self.generator_loss
-            '''
-            
+                           
             # AJ: Count here, D2 is taking true data only.
             _, d2_loss_curr = self.sess.run([discriminator2_optimizer, self.dis2_loss],
                         feed_dict={self.x_input: batch_x,
@@ -232,7 +184,7 @@ def train_cluster(self):
                         self.x_input_: batch_x_, self.batch_input_: X_,
                         self.keep_prob: self.keep_param}) 
             
-            _, db_loss_curr = self.sess.run([discriminatorb_optimizer, self.disb_loss],
+            _, db_loss_curr = self.sess.run([batchClassifier_optimizer, self.disb_loss],
                 feed_dict={self.x_input: batch_x,
                             self.batch_input: X_,
                 self.real_distribution: batch_z_real_dist,
@@ -242,13 +194,13 @@ def train_cluster(self):
             
             
         #db_loss_curr = 0
-        print("Epoch : [%d] ,  a_loss = %.4f, d_loss: %.4f ,  g_loss: %.4f,  db_loss: %.4f" 
-              % (ep, a_loss_curr, d_loss_curr, g_loss_curr,db_loss_curr))
+        print("Epoch : [%d] ,  a_loss = %.4f, d_loss: %.4f , db_loss: %.4f" 
+              % (ep, a_loss_curr, d2_loss_curr, db_loss_curr))
         
         
         self._is_train = False # enables false after 1st iterations only...to make training process fast
 
-        if (np.isnan(a_loss_curr) or np.isnan(d_loss_curr) or np.isnan(g_loss_curr) or np.isnan(db_loss_curr)): # np.isnan(d2_loss_curr)
+        if (np.isnan(a_loss_curr) or np.isnan(d_loss_curr) or np.isnan(db_loss_curr)): 
           a_loss_curr = 0
           d_loss_curr = 0
           g_loss_curr = 0
@@ -259,8 +211,6 @@ def train_cluster(self):
         #self.x_target: batch_x,
         a_loss_epoch.append(a_loss_curr) # total loss getting appended 
         d_loss_epoch.append(d_loss_curr)
-        g_loss_epoch.append(g_loss_curr)
-        #d2_loss_epoch.append(d2_loss_curr)
         db_loss_epoch.append(db_loss_curr)
         
         # if (ep % 50 == 0):
@@ -324,44 +274,6 @@ def encoder(self, x, reuse = False):
                         
         return h, z_post_m, z_post_v, l_post_m, l_post_v
 
-def discriminator(self, z, z_dim, reuse=False):    
-    """
-    Discriminator that is used to match the posterior distribution with a given prior distribution.
-    :param z: tensor of shape [batch_size, z_dim]
-    :param reuse: True -> Reuse the discriminator variables,
-                  False -> Create or search of variables before creating
-    :return: tensor of shape [batch_size, 1]
-    """
-    with tf.variable_scope('Discriminator') as scope:
-        if reuse:
-            scope.reuse_variables()
-
-        if self.is_bn:
-
-            h = tf.layers.batch_normalization(
-                lrelu(dense(z, z_dim, self.d_h_dim[self.num_layers - 1], name='dis_h' + str(self.num_layers-1) + '_lin'),      
-                      alpha=self.leak),
-                training=self._is_train, name='dis_bn' + str(self.num_layers-1))
-            for i in range(self.num_layers - 2, -1, -1):
-                h = tf.layers.batch_normalization(
-                    lrelu(dense(h, self.d_h_dim[i + 1], self.d_h_dim[i], name='dis_h' + str(i) + '_lin'),
-                          alpha=self.leak),
-                    training=self._is_train, name='dis_bn' + str(i))
-
-        else:
-
-            h = tf.nn.dropout(
-                lrelu(dense(z, z_dim, self.d_h_dim[self.num_layers - 1], name='dis_h' + str(self.num_layers-1) + '_lin'),
-                      alpha=self.leak),
-                keep_prob=self.keep_prob)
-            for i in range(self.num_layers - 2, -1, -1):
-                h = tf.nn.dropout(
-                    lrelu(dense(h, self.d_h_dim[i + 1], self.d_h_dim[i], name='dis_h' + str(i) + '_lin'),
-                          alpha=self.leak), keep_prob=self.keep_prob)
-
-        output = dense(h, self.d_h_dim[0], 1, name='dis_output')
-        
-        return output
 
 def discriminator2(self, z, z_dim, reuse=False):    
     """
@@ -437,7 +349,7 @@ def decoder(self, z, reuse=False):
             
         return h
 
-def discriminatorB(self, z, z_dim, reuse = False):    
+def batchClassifier(self, z, z_dim, reuse = False):    
     
     """
     Discriminator takes the real data and try ti differentiate between different batches
@@ -543,9 +455,9 @@ class scDREAMER(object):
     train_cluster = train_cluster
     encoder = encoder
     decoder = decoder
-    discriminatorB = discriminatorB
+    batchClassifier = batchClassifier
     discriminator2 = discriminator2
-    discriminator = discriminator
+    #discriminator = discriminator
     eval_cluster_on_test = eval_cluster_on_test
     # eval_cluster_on_test_ = eval_cluster_on_test_
     zinb_model = zinb_model

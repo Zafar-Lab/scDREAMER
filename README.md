@@ -29,6 +29,5 @@ python == 3.7
 
 ## Tutorials
 Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER. <br /> <br />
-```bash
 Tutorial Link: (https://colab.research.google.com/drive/1UQ3pLd9UgSgsR8TqRFVWuYBy-doZpy2K?usp=sharing) 
-```
+

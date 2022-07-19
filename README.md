@@ -9,14 +9,14 @@ Ajita Shree, Musale Krushna Pavan, Hamim Zafar. scDREAMER: atlas-level integrati
 
 ## Installation
 
-numpy==1.21.5
-pandas==1.3.5
-scanpy==1.9.1
-scikit_learn==1.1.1
-scipy==1.7.3
-tables==3.7.0
-tensorflow==1.15.0
-python==3.7
+numpy==1.21.5 <br />
+pandas==1.3.5 <br />
+scanpy==1.9.1 <br />
+scikit_learn==1.1.1 <br />
+scipy==1.7.3 <br />
+tables==3.7.0 <br />
+tensorflow==1.15.0 <br />
+python==3.7 <br />
 
 ## Tutorials
 Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER. 

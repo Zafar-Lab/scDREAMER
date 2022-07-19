@@ -10,8 +10,10 @@ Ajita Shree, Musale Krushna Pavan, Hamim Zafar. scDREAMER: atlas-level integrati
 ## Installation
 
 scDREAMER can be installed as follows  <br />
+```bash
 git clone https://github.com/Zafar-Lab/scDREAMER.git <br />
 cd scDREAMER/scDREAMER <br />
+```
 
 Package versions: <br />
 numpy == 1.21.5 <br />

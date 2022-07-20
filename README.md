@@ -19,13 +19,10 @@ import model
 
 Package versions for scDREAMER: <br />
 ```bash
-numpy == 1.21.5 
-pandas == 1.3.5 
-scanpy == 1.9.1 
-scikit_learn == 1.1.1 
-scipy == 1.7.3 
-tables == 3.7.0 
-tensorflow == 1.15.0 
+protobuf==3.16.0
+tensorflow==1.14.0
+scikit-learn==0.24.2
+scanpy==1.7.1
 python == 3.7 
 ```
 

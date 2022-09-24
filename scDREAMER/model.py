@@ -399,7 +399,7 @@ def batchClassifier(self, z, z_dim, reuse = False):
         return output
 
 class scDREAMER(object):
-    def __init__(self, sess, epoch = 200, lr=0.0007, beta1=0.9, batch_size=128, X_dim=2000, z_dim=10, dataset_name='Pancreas',
+    def __init__(self, sess,dataset_name,batch, epoch = 200, lr=0.0007, beta1=0.9, batch_size=128, X_dim=2000, z_dim=10, 
                  checkpoint_dir='checkpoint', sample_dir='samples', result_dir = 'result', num_layers = 2, g_h_dim = [512, 256, 0, 0],
                  d_h_dim = [512, 256, 0, 0], gen_activation = 'sig', leak = 0.2, keep_param = 0.9, trans = 'sparse',is_bn = False,
                  g_iter = 2, lam=1.0, sampler = 'normal'):
@@ -412,6 +412,7 @@ class scDREAMER(object):
         self.X_dim = X_dim
         self.z_dim = z_dim
         self.dataset_name = dataset_name
+        self.batch = batch
         self.checkpoint_dir = checkpoint_dir
         self.sample_dir = sample_dir
         self.result_dir = result_dir
@@ -430,10 +431,10 @@ class scDREAMER(object):
         self._is_train = False
         self.n_hidden = 128 
         if self.trans == 'sparse':
-            self.data_train, self.data_test, self.scale, self.labels_train, self.labels_test, self.batch_train, self.batch_test, self.batch_info = load_gene_mtx(self.dataset_name, transform=False, count=False, actv=self.gen_activation)
+            self.data_train, self.data_test, self.scale, self.labels_train, self.labels_test, self.batch_train, self.batch_test, self.batch_info = load_gene_mtx(self.dataset_name, self.batch, transform=False, count=False, actv=self.gen_activation)
             self.N_batch = self.batch_train.shape[1]
         else:
-            self.data_train, self.data_test, self.labels_train, self.labels_val, self.labels_test  = load_gene_mtx(self.dataset_name, transform=True)
+            self.data_train, self.data_test, self.labels_train, self.labels_val, self.labels_test  = load_gene_mtx(self.dataset_name, self.batch, transform=True)
             self.scale = 1.0
                 
         if self.gen_activation == 'tanh':

@@ -86,7 +86,7 @@ def eval_cluster_on_test(self,ep):
     print('NMI = {}'. 
           format(NMI)) 
 
-def read_h5ad(data_path, batch, cell_type=None,hvg=2000):
+def read_h5ad(data_path, batch, hvg=2000):
     print('updated hvg')
     Ann = sc.read_h5ad(data_path)
     Ann.layers["counts"] = Ann.X.copy()
@@ -101,14 +101,10 @@ def read_h5ad(data_path, batch, cell_type=None,hvg=2000):
         n_top_genes=hvg,
         batch_key=batch,
         subset=True)
-  
-    #df_final = pd.DataFrame.sparse.from_spmatrix(Ann.X) # Lung, Simulation1, Simulation 2
-    df_final = pd.DataFrame(Ann.X) # Immune , Pan
 
-    df_final = df_final.reset_index(drop = True)
-    data = df_final.to_numpy()
-    if cell_type:
-        labels = Ann.obs[cell_type].to_list()
+    if type(Ann.X) != type(np.array([])):
+        Ann.X = np.array(Ann.X)
+    data = Ann.X 
 
     #AJ: Convert to categorical instead of this...
     t_ = Ann.obs[batch] #.to_list()
@@ -121,14 +117,12 @@ def read_h5ad(data_path, batch, cell_type=None,hvg=2000):
     enc.fit(batch_info.reshape(-1, 1))
     batch_info_enc = enc.transform(batch_info.reshape(-1, 1)).toarray()
 
-    return data, labels, batch_info_enc, batch_info
+    return data, batch_info_enc, batch_info
     
 
-def load_gene_mtx(dataset_name, transform = True, count = True, actv = 'sig'):
-    print('came in load_gene')
-    B = "tech"
-    C = "celltype"
-    data, labels, batch_info_enc, batch_info = read_h5ad(dataset_name, B, C)
+def load_gene_mtx(dataset_name, batch, transform = True, count = True, actv = 'sig'):
+
+    data, batch_info_enc, batch_info = read_h5ad(dataset_name, batch)
          
     if count == False:
         data = np.log2(data+1)

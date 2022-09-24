@@ -431,10 +431,10 @@ class scDREAMER(object):
         self._is_train = False
         self.n_hidden = 128 
         if self.trans == 'sparse':
-            self.data_train, self.data_test, self.scale, self.labels_train, self.labels_test, self.batch_train, self.batch_test, self.batch_info = load_gene_mtx(self.dataset_name, self.batch, transform=False, count=False, actv=self.gen_activation)
+            self.data_train, self.data_test, self.scale,  self.batch_train, self.batch_test, self.batch_info = load_gene_mtx(self.dataset_name, self.batch, transform=False, count=False, actv=self.gen_activation)
             self.N_batch = self.batch_train.shape[1]
         else:
-            self.data_train, self.data_test, self.labels_train, self.labels_val, self.labels_test  = load_gene_mtx(self.dataset_name, self.batch, transform=True)
+            self.data_train, self.data_test  = load_gene_mtx(self.dataset_name, self.batch, transform=True)
             self.scale = 1.0
                 
         if self.gen_activation == 'tanh':

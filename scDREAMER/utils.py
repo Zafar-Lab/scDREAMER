@@ -134,15 +134,15 @@ def load_gene_mtx(dataset_name, batch, transform = True, count = True, actv = 's
         data = data / scale           
 
     ord_enc = LabelEncoder()
-    labels  = ord_enc.fit_transform(labels)
-    print ('here', labels)
+    # labels  = ord_enc.fit_transform(labels)
+    # print ('here', labels)
 
-    unique, counts = np.unique(labels, return_counts = True)
-    dict(zip(unique, counts))
+    # unique, counts = np.unique(labels, return_counts = True)
+    # dict(zip(unique, counts))
     
     total_size = data.shape[0]
 
     if count == False:
-        return data, data, scale, labels, labels, batch_info_enc, batch_info_enc, batch_info
+        return data, data, scale, batch_info_enc, batch_info_enc, batch_info
 
-    return data, data, labels, labels, labels
+    return data, data

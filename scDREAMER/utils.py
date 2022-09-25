@@ -52,39 +52,39 @@ def zinb_model(self, x, mean, inverse_dispersion, logit, eps=1e-4):
 def eval_cluster_on_test(self,ep):
     # Embedding points in the test data to the latent space
     inp_encoder = self.data_test
-    labels = self.labels_test
+    # labels = self.labels_test
     batch_label = self.batch_test
             
     latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder, self.batch_input: batch_label, self.keep_prob: 1.0})
     
-    print ('latent_matrix shape', latent_matrix.shape)
-    print (labels.shape)
+    # print ('latent_matrix shape', latent_matrix.shape)
+    # print (labels.shape)
     
     Ann = sc.AnnData(inp_encoder)
     Ann.obsm['final_embeddings'] = latent_matrix
-    Ann.obs['group'] = labels.astype(str)
+    # Ann.obs['group'] = labels.astype(str)
     
-    sc.pp.neighbors(Ann, use_rep = 'final_embeddings') #use_rep = 'final_embeddings'
-    sc.tl.umap(Ann)
-    img = sc.pl.umap(Ann, color = 'group', frameon = False) # cells
-    print(img)
+    #sc.pp.neighbors(Ann, use_rep = 'final_embeddings') #use_rep = 'final_embeddings'
+    #sc.tl.umap(Ann)
+    #img = sc.pl.umap(Ann, color = 'group', frameon = False) # cells
+    #print(img)
     
     np.savetxt('latent_matrix_c'+str(ep)+'.csv', latent_matrix, delimiter=",")
     
-    Ann.obs['batch'] = self.batch_info.astype(str)
-    img2 = sc.pl.umap(Ann, color = 'batch', frameon = False)
-    print(img2)
+    #Ann.obs['batch'] = self.batch_info.astype(str)
+    #img2 = sc.pl.umap(Ann, color = self.batch, frameon = False)
+    #print(img2)
 
-    K = np.size(np.unique(labels))   
-    kmeans = KMeans(n_clusters=K, random_state=0).fit(latent_matrix)
-    y_pred = kmeans.labels_
+    # K = np.size(np.unique(labels))   
+    # kmeans = KMeans(n_clusters=K, random_state=0).fit(latent_matrix)
+    # y_pred = kmeans.labels_
 
-    print('Computing NMI ...')
-    NMI = nmi(labels.flatten(), y_pred.flatten())
-    print('Done !')
+    # print('Computing NMI ...')
+    # NMI = nmi(labels.flatten(), y_pred.flatten())
+    # print('Done !')
 
-    print('NMI = {}'. 
-          format(NMI)) 
+    # print('NMI = {}'. 
+          # format(NMI)) 
 
 def read_h5ad(data_path, batch, hvg=2000):
     print('updated hvg')

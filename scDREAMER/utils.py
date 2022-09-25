@@ -103,7 +103,7 @@ def read_h5ad(data_path, batch, hvg=2000):
         subset=True)
 
     if type(Ann.X) != type(np.array([])):
-        Ann.X = np.array(Ann.X)
+        Ann.X = Ann.X.todense()
     data = Ann.X 
 
     #AJ: Convert to categorical instead of this...

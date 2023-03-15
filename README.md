@@ -5,7 +5,9 @@
 <img src='architecture.png'>
 
 ## Cite this article
-Ajita Shree, Musale Krushna Pavan, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1101/2022.07.12.499846 
+Ajita Shree*, Musale Krushna Pavan*, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1101/2022.07.12.499846  
+
+* equally contributed
 
 ## Installation
 
@@ -17,7 +19,7 @@ cd scDREAMER/scDREAMER
 import model
 ```
 
-Package versions for scDREAMER: <br />
+Requirements for scDREAMER: <br />
 ```bash
 protobuf==3.16.0
 tensorflow==1.14.0

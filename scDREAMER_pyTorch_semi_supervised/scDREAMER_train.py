@@ -7,8 +7,10 @@ Network training module
 """
 
 import time
+import random
 import numpy as np
 import torch
+import pandas as pd
 import scanpy as sc
 from progress.bar import Bar
 import torch.nn.modules.loss
@@ -16,6 +18,9 @@ import torch.nn.functional as F
 from progress.bar import Bar
 from scDREAMER_model import VAE, Batch_classifier, Discriminator
 from torch.utils.data import Dataset, DataLoader
+import matplotlib.pyplot as plt
+from torch.distributions import kl_divergence as kl
+from torch.distributions import Normal
 
 # Data Loader
 class AnndataLoader1(Dataset):
@@ -36,11 +41,29 @@ class AnndataLoader1(Dataset):
         x = self.Ann.X[idx, :]
         batch_encoded = self.Ann.obsm[self.batch + '_encoded'][idx, :]
         
+        cell_type_encoded = self.Ann.obsm[self.cell_type + "_encoded"][idx, :]
+        cell_label_NA = self.Ann.obs[self.cell_type + "_NA"][idx]
+        
+        if cell_label_NA == "NA":
+            label = 0
+        else:
+            label = 1
+        
         sample = {'X' : x, 
-                  self.batch + '_encoded' : batch_encoded} 
+                  self.batch + '_encoded' : batch_encoded,
+                 self.cell_type + '_encoded' : cell_type_encoded,
+                 self.cell_type + '_NA' : label
+                 } 
         
         return sample
+
+def cap(inp):
     
+    capL = torch.ones_like(inp)*1e-4
+    capU = torch.ones_like(inp)*1e4
+    
+    return torch.minimum(torch.maximum(inp, capL), capU)
+
 
 def zinb(x, mu, theta, pi, eps = 1e-8):
     
@@ -67,9 +90,9 @@ def zinb(x, mu, theta, pi, eps = 1e-8):
     
     
     softplus_pi = F.softplus(-pi)  #  uses log(sigmoid(x)) = -softplus(-x)
-    log_theta_eps = torch.log(theta + eps)
+    log_theta_eps = torch.log(cap(theta + eps))
 
-    log_theta_mu_eps = torch.log(theta + mu + eps)
+    log_theta_mu_eps = torch.log(cap(theta + mu + eps))
     pi_theta_log = -pi + theta * (log_theta_eps - log_theta_mu_eps)
 
     case_zero = F.softplus(pi_theta_log) - softplus_pi
@@ -78,48 +101,52 @@ def zinb(x, mu, theta, pi, eps = 1e-8):
     case_non_zero = (
         -softplus_pi
         + pi_theta_log
-        + x * (torch.log(mu + eps) - log_theta_mu_eps)
-        + torch.lgamma(x + theta)
-        - torch.lgamma(theta)
-        - torch.lgamma(x + 1)
+        + x * (torch.log(cap(mu + eps)) - log_theta_mu_eps)
+        + torch.lgamma(cap(x + theta))
+        - torch.lgamma(cap(theta))
+        - torch.lgamma(cap(x + 1))
     )
+    
     mul_case_non_zero = torch.mul((x > eps).type(torch.float32), case_non_zero)
 
     res = mul_case_zero + mul_case_non_zero
 
-    res = torch.sum(res) # TODO: returns sum of each row of the 2D tensor
+    #res = torch.sum(res) # TODO: returns sum of each row of the 2D tensor
     
-    return torch.mean(res)
+    return torch.mean(res.sum(-1))
 
-def kl_div_l(mu1, var1, mu2, var2):
+def kl_div(mu1, var1, mu2, var2):
     
     """
+    # removed square root..
     l_post = torch.normal(mu1, var1)
     l_prior = torch.normal(mu2, var2)
     
     kl_loss = torch.nn.functional.kl_div(l_post, l_prior) 
     # mu2, var2 = prior
     """
-
-    kl_loss = 2*torch.log(var2/var1) + torch.square(var2/var1) + torch.square((mu1 - mu2)/var2) - 1
-    #kl_loss = 2 * (var2/var1.exp()) + torch.square(var2/var1.exp()) + torch.square((mu1 - mu2)/var2) - 1
     
-    return 0.5 * torch.mean(torch.sum(kl_loss))
+    #kl_loss = kl(Normal(mu1, var1), Normal(mu2, var2)).sum(dim = 1)
 
-def kl_div(mu, var, n_obs):
+    kl_loss = 2*torch.log(cap(var2/var1)) + torch.square(var1/var2) + torch.square((mu1 - mu2)/var2) - 1
+    #return 0.5 * torch.mean(torch.sum(kl_loss))
+    
+    return torch.mean(kl_loss)
+
+def kl_div_01(mu, var):
     
     """
     Computes KL divergence between posterior sample ~ N(mu, sigma) and prior sample ~ N(0, 1) 
     """    
-    #kl_loss = torch.nn.functional.kl_div(posterior, prior)    
-   
-    kl_loss = -0.5 * torch.mean(torch.sum(1 - torch.pow(mu, 2) - torch.pow(var, 2) + 2 * torch.log(var)))
-    #kl_loss = -0.5 * torch.mean(torch.sum(1 - torch.pow(mu, 2) - torch.pow(var.exp(), 2) + 2 * var))
-    
+    #kl_loss = torch.nn.functional.kl_div(posterior, prior)       
+    kl_loss = -0.5 * torch.mean(torch.sum(1 - torch.pow(mu, 2) - torch.pow(var, 2) + 2 * torch.log(cap(var))))
     return kl_loss
     
+    #kl_loss = kl(Normal(mu, var), Normal(0, 1)).sum(dim = 1)
     
+    #return torch.mean(kl_loss)
     
+        
 def Bhattacharyya_loss(p, q):
     
     """
@@ -131,9 +158,9 @@ def Bhattacharyya_loss(p, q):
     q[q < 0] *= -1
     
     tmp = torch.sum(torch.mul(p, q), 1)
-    b_loss = torch.log(torch.sum(torch.sqrt(tmp))) 
+    b_loss = torch.log(cap(torch.sum(torch.sqrt(tmp)))) 
     
-    return b_loss
+    return 0.1*b_loss
     
     
 def crossentropy_loss(predict_labels, label):
@@ -156,7 +183,8 @@ class scDREAMER_Train:
     def __init__(self, adata, params):
         
 
-        self.device = params.device
+        #self.device = params.device
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.batch_size = params.batch_size
         self.epochs = params.epochs
         self.batch = params.batch
@@ -164,162 +192,162 @@ class scDREAMER_Train:
         self.z_dim = params.z_dim
         self.X_dim = params.X_dim
         self.lr = params.lr
+        self.name = params.name
         self.num_batches = len(adata.obs[params.batch].unique())
-        
-        #self.data = torch.FloatTensor(data.copy()).to(self.device)
+        self.num_cell_type = len(adata.obs[params.cell_type].unique())
         
         self.adata = adata
         self.total_size = len(self.adata)
         self.num_minibatches = int(self.total_size/self.batch_size)        
         params.num_batches = self.num_batches
+        params.num_cell_type = self.num_cell_type
         self.params = params
         
         self.vae = VAE(self.params).to(self.device)
-        self.batch_classifier = Batch_classifier(self.params).to(self.device)
-        #self.discriminator = Discriminator(self.params).to(self.device)
         
-        self.kl_scale = 0.001 # 0.001 (actual) earlier...0.01 tried so far
+        #print('vae.device: {}'.format(self.vae.device))
+        
+        self.batch_classifier = Batch_classifier(self.params).to(self.device)
+        self.discriminator = Discriminator(self.params).to(self.device)
+        self.kl_scale = 0.0001 # 0.001 (actual) earlier...0.01 tried so far
 
         lib_real = torch.log(torch.sum(torch.FloatTensor(self.adata.X), axis = 1))
         self.lib_mu = torch.mean(lib_real)
         self.lib_var = torch.var(lib_real)
                 
         # Sample from Gaussian N(0, 1): Retuns a normal dist with mea 0 and variance 1        
-        #self.real_dis = np.random.randn(self.batch_size, self.z_dim).to(self.device)
         self.real_dis = torch.randn_like(torch.zeros(self.batch_size, self.z_dim)).to(self.device)
         self.real_dis_logit = torch.randn_like(torch.zeros(self.batch_size, self.X_dim)).to(self.device)
-        
-        self.vae_optimizer = torch.optim.Adam(params = list(self.vae.parameters()), lr = 0.0002)
-        self.bc_optimizer = torch.optim.Adam(params = list(self.batch_classifier.parameters()), lr = self.params.lr)
-        #self.dis_optimizer = torch.optim.Adam(params = list(self.discriminator.parameters()), lr = self.params.lr)
+                
+        self.vae_optimizer = torch.optim.Adam(params = list(self.vae.parameters()), lr = 0.0002, betas = (0.5, 0.99))
+        #self.vae_adv_optimizer = torch.optim.Adam(params = list(self.vae.z_encoder.parameters()), lr = 0.0002, betas = (0.5, 0.99))
+        self.bc_optimizer = torch.optim.Adam(params = list(self.batch_classifier.parameters()), lr = self.params.lr, betas = (0.5, 0.99))
+        self.dis_optimizer = torch.optim.Adam(params = list(self.discriminator.parameters()), lr = self.params.lr, betas = (0.5, 0.99))
         
     def train_vae(self, epoch, flag):
         
         ann_dataset = AnndataLoader1(self.adata, self.batch, self.cell_type)
-        dataloader = DataLoader(ann_dataset, batch_size = self.batch_size, shuffle = True, num_workers = 0, drop_last = True)
+        dataloader = DataLoader(ann_dataset, batch_size = self.batch_size, shuffle = True, num_workers = 4, drop_last = True)
 
+        auto_encoder_loss_sum = 0
+        auto_encoder_loss_sum_ = 0
+        c_loss_sum = 0
+        b_loss_sum = 0
+        n_batches = 0
+        
         for i_batch, sample_batched in enumerate(dataloader):
     
-
             data = sample_batched['X'].to(self.device)
             batch = sample_batched[self.batch + '_encoded'].to(self.device)
-            batch = batch.to(torch.float32)
-            
-            #print (data.shape, ", ", batch.shape)
-            #z, mu_z, var_z, mu_l, var_l, mu_x, pi_x, x_recon, predict_labels, p_x, p_x_recon = self.model(data, batch)
-            z, mu_z, var_z, mu_l, var_l, mu_x, pi_x, x_recon = self.vae(data, batch)
+            cell_type = sample_batched[self.cell_type + '_encoded'].to(self.device)
+            #print (sample_batched[self.cell_type + '_NA'])
+            na_label = torch.Tensor(sample_batched[self.cell_type + '_NA']).view(-1, 1).to(self.device)
+
+            batch = batch.to(torch.float32)            
+            cell_type = cell_type.to(torch.float32)
+            #na_label = na_label.to(torch.float32)
+
+            z, mu_z, var_z, mu_l, var_l, mu_x, pi_x, x_recon, mu_z_pr, var_z_pr, c_predict = self.vae(data, batch, cell_type)
 
             theta_x = torch.exp(self.real_dis_logit)                
             zinb_term =  zinb(data, mu_x, theta_x, pi_x)
 
-            kl_term =  self.kl_scale * kl_div(mu_z, var_z, self.batch_size) + \
-            self.kl_scale * kl_div_l(mu_l, var_l, self.lib_mu, self.lib_var)
+            kl_term =  self.kl_scale * kl_div(mu_z, var_z, mu_z_pr, var_z_pr) + \
+            self.kl_scale * kl_div(mu_l, var_l, self.lib_mu, self.lib_var)
 
-            ELBO = zinb_term - kl_term
-            #print ("zinb", zinb_term.data.cpu().numpy())
-            #print ("kl_term", kl_term.data.cpu().numpy())
+            #kl_term =  self.kl_scale * kl_div_01(mu_z, var_z) + \
+            #self.kl_scale * kl_div(mu_l, var_l, self.lib_mu, self.lib_var)
             
-            auto_encoder_loss = - ELBO 
+            #z_log_likelihood = -0.5*torch.square((z - mu_z)/var_z) - torch.log(var_z)
+                        
+            #print ("mu_z_pr", mu_z_pr.data.cpu().numpy())
+            #print ("var_z_pr", var_z_pr.data.cpu().numpy())
             
+            ELBO = zinb_term - kl_term # + torch.mean(z_log_likelihood.sum(-1))
+            
+            c_predict_subset = torch.multiply(c_predict, na_label)
+            cell_type_subset = torch.multiply(cell_type, na_label)
+            
+            # remove 0ed out rows from the batch
+            c_predict_subset = c_predict_subset[c_predict_subset.sum(dim = 1) != 0]
+            cell_type_subset = cell_type_subset[cell_type_subset.sum(dim = 1) != 0]
+            
+            cell_classifier_loss = 10*crossentropy_loss(c_predict_subset, cell_type_subset)
+                           
+                        
+            #################################
+            # Adversarial loss discriminators
+            #################################
             
             predict_labels = self.batch_classifier(z)            
             classifier_loss = crossentropy_loss(predict_labels, batch)
-
-
-            auto_encoder_loss -= classifier_loss #- bhattachryya_loss
-
-            """
+          
             p_x, p_x_recon = self.discriminator(data, x_recon)
             bhattachryya_loss = Bhattacharyya_loss(p_x, p_x_recon)
-
-            auto_encoder_loss -= bhattachryya_loss
-                
-            self.vae_optimizer.zero_grad()
-            """
-            # clip the gradients
-            torch.nn.utils.clip_grad_norm_(self.vae.parameters(), max_norm = 1)
             
+            auto_encoder_loss = - ELBO + cell_classifier_loss - classifier_loss - bhattachryya_loss
+            
+            self.vae_optimizer.zero_grad()
             auto_encoder_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.vae.parameters(), max_norm = 1)
             self.vae_optimizer.step()
             
-        print ("Epoch :", epoch, "a loss:", auto_encoder_loss.item())                       
-
-    
-    def train_discriminators(self, epoch):
-        
-        ann_dataset = AnndataLoader1(self.adata, self.batch, self.cell_type)
-        dataloader = DataLoader(ann_dataset, batch_size = self.batch_size, shuffle = True, num_workers = 0, drop_last = True)
-
-        for i_batch, sample_batched in enumerate(dataloader):
-    
-            data = sample_batched['X'].to(self.device)
-            batch = sample_batched[self.batch + '_encoded'].to(self.device)
-            batch = batch.to(torch.float32)
             
-            # Batch_classifier step
+            
+            #################################
+            # Training Batch Classifier
+            #################################
+            
             with torch.no_grad():
-                z, _, _, _, _, _, _, x_recon = self.vae(data, batch)
+                z, _, _, _, _, _, _, x_recon, _,_,_ = self.vae(data, batch, cell_type)
 
-            #print ("z", z.data.cpu().numpy())
             predict_labels = self.batch_classifier(z)
 
             classifier_loss = crossentropy_loss(predict_labels, batch)
 
-            self.bc_optimizer.zero_grad()
-            classifier_loss.backward()
+            self.bc_optimizer.zero_grad()          
+            classifier_loss.backward()               
             self.bc_optimizer.step()
-
-            # Discriminator step
-            #f (epoch >= 50):
-            """
+            
+            #################################
+            # Training Discriminator
+            #################################
+            
             p_x, p_x_recon = self.discriminator(data, x_recon)
             bhattachryya_loss = Bhattacharyya_loss(p_x, p_x_recon)
 
             self.dis_optimizer.zero_grad()
-            bhattachryya_loss.backward()                
+            bhattachryya_loss.backward()   
             self.dis_optimizer.step()
-            """    
-                    
-        #if (epoch >= 50):
-        print ("Epoch :", epoch, "c loss:", classifier_loss.item())\
-               #, "b loss:", bhattachryya_loss.item())
-        
-    
-
+            
+            c_loss_sum += classifier_loss.item()
+            b_loss_sum += bhattachryya_loss.item()
+            auto_encoder_loss_sum += auto_encoder_loss.item()
+            
+            n_batches += 1
+                
+            
+        print ("Epoch :", epoch, "c loss:", c_loss_sum/n_batches, "b loss:", b_loss_sum/n_batches)                   
+        print ("Epoch :", epoch, "a loss:", auto_encoder_loss_sum/n_batches)                       
+   
     
     def train_network(self):
-        
-        self.vae.train()
-        self.batch_classifier.train()
-        #self.discriminator.train()
                         
         for epoch in range(self.epochs):
-
-            start_time = time.time()
-            a_loss = b_loss = c_loss = 0
-                                  
-            # VAE Step          
-            for vae_epoch in range(1):
-                self.train_vae(epoch, True)
-                            
-            for ep in range(1):
-                self.train_discriminators(epoch)
-       
-            #self.train_vae(epoch, False)
-            #self.train_discriminator(epoch)
+            
+            self.vae.train()
+            self.batch_classifier.train()
+            self.discriminator.train()
+            
+            self.train_vae(epoch, True)
+            
+            """    
+            if (epoch in [1, 100, 150, 200, 250]):
+                z = self.process(epoch)
+                self.plot_embeddings(z, epoch)
+                
+            """        
         
-
-            """
-            #a_loss += auto_encoder_loss
-            #b_loss += bhattachryya_loss
-            #c_loss += classifier_loss                
-            end_time = time.time()
-            batch_time = end_time - start_time
-            print ("Epoch :", epoch, "a loss:", auto_encoder_loss.item(), " bc loss ", classifier_loss.item(), \
-               " dis loss ", bhattachryya_loss.item())
-            """
-
-
     def save_model(self, save_model_file):
         
         torch.save({'state_dict': self.vae.state_dict()}, save_model_file)
@@ -331,22 +359,32 @@ class scDREAMER_Train:
         self.model.load_state_dict(saved_state_dict['state_dict'])
         print('Loading model from %s' % save_model_file)
 
-    def process(self, Ann):
+    def process(self, adata, epoch):
         
         self.vae.eval()
         
-        data = torch.FloatTensor(Ann.X).to(self.device)
-        batch = torch.Tensor(Ann.obsm[self.batch + '_encoded']).to(self.device)
+        data = torch.FloatTensor(adata.X).to(self.device)
+        batch = torch.Tensor(adata.obsm[self.batch + '_encoded']).to(self.device)
+        cell_type = torch.Tensor(adata.obsm[self.cell_type + '_encoded']).to(self.device)
         
-        #z, _, _, _, _, _, _, _, _, _, _ = self.model(data, batch)
-        z, _, _, _, _, _, _, _ = self.vae(data, batch)
+        z, _, _, _, _, _, _, _, _,_,_ = self.vae(data, batch, cell_type)
          
         z = z.data.cpu().numpy()
-        
+        np.savetxt(self.name + "_z_" + str(epoch) + ".csv", z, delimiter = ",")
         return z
     
-    
+    def plot_embeddings(self, z, epoch):
+
+        self.adata.obsm['final_embeddings'] = pd.DataFrame(z,index = self.adata.obs_names).to_numpy()
+
+        sc.pp.neighbors(self.adata, use_rep = 'final_embeddings') #use_rep = 'final_embeddings'
+        sc.tl.umap(self.adata)
         
+        sc.pl.umap(self.adata, color = self.cell_type, frameon = False, show = False) # cells
+        plt.savefig(self.name + "_cell_" + str(epoch))
+        sc.pl.umap(self.adata, color = self.batch, frameon = False, show = False)
+        plt.savefig(self.name + "_batch_" + str(epoch))
+
         
         
         

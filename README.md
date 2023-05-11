@@ -12,7 +12,7 @@ A stable `pip` installation release for scDREAMER package will be made available
 1. git clone https://github.com/Zafar-Lab/scDREAMER.git
 2. conda env create --file = scDREAMER.yaml
 
-## What Computational tasks can be scDREAMER be used for?
+## What Computational tasks can scDREAMER be used for?
 
 `scDREAMER` suite can be used for:
 1. scDREAMER, unsupervised integration of multiple batches

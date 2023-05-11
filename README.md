@@ -21,10 +21,9 @@ import model
 
 Requirements for scDREAMER: <br />
 ```bash
-protobuf==3.16.0
-tensorflow==1.14.0
-scikit-learn==0.24.2
-scanpy==1.7.1
+tensorflow == 2.12.0
+scikit-learn == 0.24.2
+scanpy == 1.7.1
 python == 3.7 
 ```
 

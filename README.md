@@ -14,7 +14,7 @@ A stable `pip` installation release for scDREAMER package will be made available
 
 ## What Computational tasks can be scDREAMER be used for?
 
-'scDREAMER' suite can be used for:
+`scDREAMER` suite can be used for:
 1. scDREAMER, unsupervised integration of multiple batches
 2. scDREAMER-SUP for a supervised integration across batches
 3. scDREAMER-SUP can also be when cell type annotations are missing in the datasets i.e. 10%, 20%, 50%

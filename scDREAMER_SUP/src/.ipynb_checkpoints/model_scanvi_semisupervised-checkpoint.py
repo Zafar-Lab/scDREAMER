@@ -17,7 +17,7 @@ def build_model(self):
     self.batch_input = tf.placeholder(dtype = tf.float32, shape=[None, self.N_batch], name='batch_input') # 6, 3
     self.batch_input_ = tf.placeholder(dtype = tf.float32, shape=[None, self.N_batch], name='batch_input')
     self.labels = tf.placeholder(dtype = tf.float32, shape=[None, self.N_celltype], name='celltype_input')
-    self.labels_naT = tf.placeholder(dtype = tf.float32, shape=[None, 1], name='celltype_input')
+    self.labels_naT = tf.placeholder(dtype = tf.float32, shape=[None,], name='celltype_input')
     
     self.keep_prob = tf.placeholder(dtype=tf.float32, name = 'keep_prob')
     self.real_distribution = tf.placeholder(dtype=tf.float32, shape=[None, self.z_dim], name='Real_distribution')
@@ -145,24 +145,25 @@ def build_model(self):
     
     # - is added to ELBO because we maximize the ELBO expression & maximize classifier cross entropy loss -> -loss minimize cross entropy
     
-    # Filter all NAs for semi-supervised setting.
-    #print ("labels are here", self.labels)
-    #y = tf.where(x < 1., 0., 1. / x)
-    #y = tf.where(self.labels_naT == 0)
     
-    #print ("y is", y)
-
-    #self.classifier_loss = 10*tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit_labels, labels = self.labels_labels))
+    self.masked_classifier_logit = tf.boolean_mask(self.classifier_logit, self.labels_naT)
+    self.masked_labels =  tf.boolean_mask(self.labels, self.labels_naT)
     
-    self.classifier_loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit, labels = self.labels)
+    self.classifier_loss = 10*tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.masked_classifier_logit, labels = self.masked_labels))
+    
+    """
+    
+    self.classifier_loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit, \
+    labels = self.labels)
     
     #self.classifier_loss = 10*tf.reduce_mean(self.classifier_loss)#tf.multiply(self.classifier_loss, self.labels_naT))
  
     #print("classifier before", 10*tf.reduce_mean(self.classifier_loss).eval())
-    self.classifier_loss = 10*tf.reduce_mean(tf.multiply(self.classifier_loss, self.labels_naT))
+    self.classifier_loss = 5*tf.reduce_mean(tf.multiply(self.classifier_loss, self.labels_naT))
 
     #print ("classifier after", self.classifier_loss.eval())
-        
+    """
+    
     self.autoencoder_loss = - self.ELBO_gauss - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.disb_real_logit, labels = self.batch_input))- tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis2_real_logit/tf.reduce_sum(self.dis2_real_logit)* self.dis2_fake_logit/tf.reduce_sum(self.dis2_fake_logit)))), capL), capU)) + self.classifier_loss           
                    
     # Discriminator D2: minimize distance min max objective function - BD distance between X(generated sample) and X input 
@@ -194,7 +195,7 @@ def train_cluster(self):
     # double and half
     # learning_rate=self.lr,beta1=self.beta1 #0.0002 # later 0.00005 for nan issue in immune human
     # 0.00001 for hum mouse, 0.00005 for 50% labels missing
-    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = 0.0002,beta1 = self.beta1).minimize(self.autoencoder_loss) #self.disb_vars, var_list = self.gen_vars
+    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = 0.0002*0.5,beta1 = self.beta1).minimize(self.autoencoder_loss) #self.disb_vars, var_list = self.gen_vars
 
     # Discriminator D2
     
@@ -236,9 +237,9 @@ def train_cluster(self):
             
             for i in labels_n:
                 if i =="NA":
-                    labels_n_ += [[0 for i in range(1)]] #1 , self.N_celltype
+                    labels_n_ += [False] #[[False for i in range(1)]] #1 , self.N_celltype
                 else:
-                    labels_n_ += [[1 for i in range(1)]]
+                    labels_n_ += [True] #[[True for i in range(1)]]
                 
             labels_n_ = np.array(labels_n_)
             

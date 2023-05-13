@@ -119,8 +119,8 @@ def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, hvg=2000):
     df_final = df_final.reset_index(drop = True)
     data = df_final.to_numpy()
     
-    if plot_cell_type:
-        labels = Ann.obs[plot_cell_type].to_list()
+    if cell_type:
+        labels = Ann.obs[cell_type].to_list()
 
     #AJ: Convert to categorical instead of this...
     t_ = Ann.obs[batch] #.to_list()

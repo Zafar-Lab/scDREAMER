@@ -243,10 +243,10 @@ def train_cluster(self):
     num_batch_iter = self.total_size // self.batch_size
     X = np.concatenate((self.data_train, self.batch_train), axis = 1)
     
-    if self.name == "Pancreas":
-        threshold = 150
-    else:
-        threshold = 50
+    #if self.name == "Pancreas":
+    #    threshold = 150
+    #else:
+    threshold = 150
         
     for ep in range(self.epoch):
     #for it in range(num_batch_iter):

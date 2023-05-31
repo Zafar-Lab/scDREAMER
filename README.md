@@ -22,7 +22,7 @@ A stable `pip` installation release for scDREAMER package will be made available
 5. Large datasets with ~1 million cells
 
 ## Tutorials
-Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER and scDREAMER-SUP. [Data] (https://drive.google.com/drive/folders/1alw75wwWRg9KXopUccPhMh6N3b6dOoE9?usp=sharing):
+Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER and scDREAMER-SUP.[Data](https://drive.google.com/drive/folders/1alw75wwWRg9KXopUccPhMh6N3b6dOoE9?usp=sharing):
 
 1. [scDREAMER applied to lung atlas integration task]() 
 2. [scDREMER-SUP applied to human immune cells integration task](https://colab.research.google.com/drive/1t9g7dLKeHfYbPXpTygO1DuXwWV4sJlSB?usp=sharing)

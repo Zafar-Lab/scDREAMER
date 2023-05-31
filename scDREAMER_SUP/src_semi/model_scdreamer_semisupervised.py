@@ -5,7 +5,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 
 import numpy as np
-from src.utils_new_semi import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
+from src_semi.utils_new_semi import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
 import pandas as pd
 
 # Class Functions:

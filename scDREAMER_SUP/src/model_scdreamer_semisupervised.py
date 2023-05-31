@@ -5,7 +5,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 
 import numpy as np
-from src_sup_shuffle.utils_new_semi import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
+from src.utils_new_semi import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
 import pandas as pd
 
 # Class Functions:
@@ -145,6 +145,7 @@ def build_model(self):
     
     # - is added to ELBO because we maximize the ELBO expression & maximize classifier cross entropy loss -> -loss minimize cross entropy
     
+    
     self.masked_classifier_logit = tf.boolean_mask(self.classifier_logit, self.labels_naT)
     self.masked_labels =  tf.boolean_mask(self.labels, self.labels_naT)
     
@@ -152,26 +153,19 @@ def build_model(self):
       tf.equal(tf.size(class_loss_vec), 0), 
       lambda : tf.constant(0.0), lambda: 10*tf.reduce_mean(class_loss_vec)
     )
-    
     """
-    # Filter all NAs for semi-supervised setting.
-    #print ("labels are here", self.labels)
-    #y = tf.where(x < 1., 0., 1. / x)
-    #y = tf.where(self.labels_naT == 0)
     
-    #print ("y is", y)
-
-    #self.classifier_loss = 10*tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit_labels, labels = self.labels_labels))
-    
-    self.classifier_loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit, labels = self.labels)
+    self.classifier_loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit, \
+    labels = self.labels)
     
     #self.classifier_loss = 10*tf.reduce_mean(self.classifier_loss)#tf.multiply(self.classifier_loss, self.labels_naT))
  
     #print("classifier before", 10*tf.reduce_mean(self.classifier_loss).eval())
-    self.classifier_loss = 10*tf.reduce_mean(tf.multiply(self.classifier_loss, self.labels_naT))
+    self.classifier_loss = 5*tf.reduce_mean(tf.multiply(self.classifier_loss, self.labels_naT))
 
     #print ("classifier after", self.classifier_loss.eval())
     """
+    
     self.autoencoder_loss = - self.ELBO_gauss - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.disb_real_logit, labels = self.batch_input))- tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis2_real_logit/tf.reduce_sum(self.dis2_real_logit)* self.dis2_fake_logit/tf.reduce_sum(self.dis2_fake_logit)))), capL), capU)) + self.classifier_loss           
                    
     # Discriminator D2: minimize distance min max objective function - BD distance between X(generated sample) and X input 
@@ -203,7 +197,7 @@ def train_cluster(self):
     # double and half
     # learning_rate=self.lr,beta1=self.beta1 #0.0002 # later 0.00005 for nan issue in immune human
     # 0.00001 for hum mouse, 0.00005 for 50% labels missing
-    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = 0.0002,beta1 = self.beta1).minimize(self.autoencoder_loss) #self.disb_vars, var_list = self.gen_vars
+    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = 0.0002*0.5,beta1 = self.beta1).minimize(self.autoencoder_loss) #self.disb_vars, var_list = self.gen_vars
 
     # Discriminator D2
     
@@ -227,37 +221,27 @@ def train_cluster(self):
     control = 3 # Generator is updated twice for each Discriminator D1 update
 
     num_batch_iter = self.total_size // self.batch_size
-    indices = np.arange(self.data_train.shape[0])
     
     for ep in range(self.epoch):
     #for it in range(num_batch_iter):
         d_loss_curr = g_loss_curr = a_loss_curr = np.inf
         self._is_train = True
 
-        index = 0
-        np.random.shuffle(indices)
+        # AJ: oncatenating x_train and batch info for batches preparation
+        X = np.concatenate((self.data_train, self.batch_train), axis = 1)
+
 
         for it in range(num_batch_iter):
 
-            # Selecting mini batch
-            
-            batch_indices = indices[index : index + self.batch_size]
-            
-            batch_x = self.data_train[batch_indices, :]
-            X_ = self.batch_train[batch_indices, :]
-            labels_ = self.labels_enc[batch_indices, :]
-            labels_n = self.labels_na[batch_indices]            
-            index += self.batch_size
-            
-            #batch_x, X_, labels_, labels_n = self.next_batch(self.data_train, self.batch_train, self.labels_enc, self.labels_na, self.train_size)
+            batch_x, X_, labels_, labels_n = self.next_batch(self.data_train, self.batch_train, self.labels_enc, self.labels_na, self.train_size)
             
             labels_n_ = []
             
             for i in labels_n:
                 if i =="NA":
-                    labels_n_ += [False]#[[0 for i in range(1)]] #1 , self.N_celltype
+                    labels_n_ += [False] #[[False for i in range(1)]] #1 , self.N_celltype
                 else:
-                    labels_n_ += [True]#[[1 for i in range(1)]]
+                    labels_n_ += [True] #[[True for i in range(1)]]
                 
             labels_n_ = np.array(labels_n_)
             
@@ -573,8 +557,7 @@ def decoderU(self, u, reuse = False):
 
 class scDREAMER(object):
     
-    def __init__(self, sess, batch, cell_type, plot_cell_type, name, epoch = 200, lr=0.0007, beta1=0.9, 
-                 batch_size=256, X_dim=2000, 
+    def __init__(self, sess, batch, cell_type, plot_cell_type, name, epoch = 200, lr=0.0007, beta1=0.9, batch_size=128, X_dim=2000, 
                  z_dim=10, dataset_name='Pancreas',
                  checkpoint_dir='checkpoint', sample_dir='samples', result_dir = 'result', num_layers = 2, 
                  g_h_dim = [512, 256, 0, 0],d_h_dim = [512, 256, 0, 0], gen_activation = 'sig', leak = 0.2, 

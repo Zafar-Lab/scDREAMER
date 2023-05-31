@@ -5,7 +5,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 
 import numpy as np
-from src_semi.utils_new_semi import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
+from src.utils_new_semi import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
 import pandas as pd
 
 # Class Functions:
@@ -149,6 +149,8 @@ def build_model(self):
     self.masked_classifier_logit = tf.boolean_mask(self.classifier_logit, self.labels_naT)
     self.masked_labels =  tf.boolean_mask(self.labels, self.labels_naT)
     
+    class_loss_vec = tf.nn.softmax_cross_entropy_with_logits(logits = self.masked_classifier_logit, labels = self.masked_labels)
+
     self.classifier_loss = tf.cond(
       tf.equal(tf.size(class_loss_vec), 0), 
       lambda : tf.constant(0.0), lambda: 10*tf.reduce_mean(class_loss_vec)

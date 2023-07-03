@@ -280,7 +280,7 @@ def train_cluster(self):
         #d2_loss_epoch.append(d2_loss_curr)
         db_loss_epoch.append(db_loss_curr)
         
-        if (ep % 50 == 0):
+        if (ep % 50 == 0 and ep >= 100):
             self.eval_cluster_on_test_(ep)
 
     self.eval_cluster_on_test(ep)

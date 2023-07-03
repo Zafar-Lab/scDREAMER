@@ -7,7 +7,7 @@
 
 ## Installation
 
-A stable `pip` installation release for scDREAMER package will be made available shortly. For now, we recommend users to directly clone our stable `main` branch and set `scDREAMER` as the working directory. Creating conda environment using scDREAMER.yaml will install all the dependent packages and libararies. scDREAMER can be set up as follows 
+A stable `pip` installation release for scDREAMER package will be made available shortly. For now, we recommend users to directly clone our stable `main` branch and set `scDREAMER` as the working directory. Creating conda environment using ./ENVIRONMENTS/scDREAMER.yml will install all the dependent packages and libraries. scDREAMER can be set up as follows 
 
 1. git clone https://github.com/Zafar-Lab/scDREAMER.git
 2. conda env create -f scDREAMER.yml
@@ -17,7 +17,7 @@ A stable `pip` installation release for scDREAMER package will be made available
 `scDREAMER` suite can be used for:
 1. scDREAMER for an unsupervised integration of multiple batches
 2. scDREAMER-SUP for a supervised integration across multiple batches
-3. scDREAMER-SUP can also be when cell type annotations are missing in the datasets i.e. 10%, 20%, 50%
+3. scDREAMER-SUP can also be when cell type annotations are missing in the datasets i.e., 10%, 20%, 50%
 4. Atlas level and cross-species integration
 5. Large datasets with ~1 million cells
 

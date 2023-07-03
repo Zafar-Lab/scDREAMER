@@ -121,7 +121,7 @@ def load_gene_mtx(dataset_name, name, transform = True, count = True, actv = 'si
 
     ord_enc = LabelEncoder()
     labels  = ord_enc.fit_transform(labels)
-    print ('here', labels)
+
 
     unique, counts = np.unique(labels, return_counts = True)
     dict(zip(unique, counts))
@@ -203,8 +203,7 @@ def eval_cluster_on_test_(self, epoch):
             
     latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder, self.batch_input: batch_label, self.keep_prob: 1.0})
     
-    print ('latent_matrix shape', latent_matrix.shape)
-    print (labels.shape)
+
     
     Ann = sc.AnnData(inp_encoder)
     Ann.obsm['final_embeddings'] = latent_matrix
@@ -241,8 +240,7 @@ def eval_cluster_on_test(self, epoch):
             
     latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder, self.batch_input: batch_label, self.keep_prob: 1.0})
     
-    print ('latent_matrix shape', latent_matrix.shape)
-    print (labels.shape)
+
     
     Ann = sc.AnnData(inp_encoder)
     Ann.obsm['final_embeddings'] = latent_matrix

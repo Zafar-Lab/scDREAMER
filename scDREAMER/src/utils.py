@@ -13,7 +13,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics.cluster import normalized_mutual_info_score as nmi
 
 def read_h5ad(data_path, batch, cell_type, name, hvg=2000):
-    print('updated hvg')
+    print('reading data')
     Ann = sc.read_h5ad(data_path)
     Ann.layers["counts"] = Ann.X.copy()
 
@@ -105,7 +105,7 @@ def dense(x, inp_dim, out_dim, name = 'dense'):
         return out
 
 def load_gene_mtx(dataset_name, name, transform = True, count = True, actv = 'sig', batch = "batch", cell_type = "cell_type"):
-    print('came in load_gene')
+    
     #B = "tech"
     #C = "celltype"
     data, labels, batch_info_enc, batch_info = read_h5ad(dataset_name, batch, cell_type, name)

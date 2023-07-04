@@ -1,4 +1,4 @@
-name: scDREAMER
+name: scdreamer
 channels:
   - conda-forge
   - defaults
@@ -247,4 +247,4 @@ dependencies:
       - wrapt==1.14.1
       - y-py==0.5.9
       - ypy-websocket==0.8.2
-prefix: /home/krushna/Softwares/Anaconda3/envs/scDREAMER
+prefix: /home/krushna/Softwares/Anaconda3/envs/scdreamer

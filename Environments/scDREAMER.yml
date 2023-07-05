@@ -249,3 +249,4 @@ dependencies:
       - y-py==0.5.9
       - ypy-websocket==0.8.2
 prefix: /home/krushna/Softwares/Anaconda3/envs/scdreamer
+# update the prefix path (location) to save the environment

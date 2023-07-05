@@ -36,4 +36,4 @@ In case of any bug reports, enhancement requests, general questions, and other c
 
 ## Cite this article
 Ajita Shree*, Musale Krushna Pavan*, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1101/2022.07.12.499846  
-* equally contributed
+\* equally contributed

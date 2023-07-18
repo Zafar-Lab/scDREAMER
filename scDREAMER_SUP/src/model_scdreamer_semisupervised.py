@@ -41,7 +41,7 @@ def build_model(self):
     self.expression = self.x_input               
     self.proj = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='projection')
   
-    log_library_size = np.log(np.sum(self.data_train, axis=1)) 
+    log_library_size = np.log(np.sum(self.data_train, axis=1) + 1) 
     mean, variance = np.mean(log_library_size), np.var(log_library_size)
 
     library_size_mean = mean

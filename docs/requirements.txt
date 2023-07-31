@@ -1,0 +1,6 @@
+tensorflow
+scanpy
+anndata
+numpy
+sphinx-rtd-theme==1.2.2
+Sphinx

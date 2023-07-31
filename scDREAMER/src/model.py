@@ -1,14 +1,13 @@
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 import numpy as np
-from src.utils import dense,lrelu,zinb_model,eval_cluster_on_test,eval_cluster_on_test_, load_gene_mtx
+from .utils import dense,lrelu,zinb_model,eval_cluster_on_test,eval_cluster_on_test_, load_gene_mtx
 import pandas as pd
 
 
 # Class Functions:
 def build_model(self):
-
-   
+  
     self.x_input = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='Input')
     self.x_input_ = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='Input')
     self.x_target = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='Target')
@@ -137,7 +136,7 @@ def build_model(self):
 
 
 def train_cluster(self):
-
+    
     print('Cluster DRA on DataSet {} ... '.format(self.dataset_name))
 
     #tf.train.Optimizer
@@ -290,12 +289,12 @@ def train_cluster(self):
 # reuse = False
 
 def encoder(self, x, reuse = False):
-    """
-    Encode part of the autoencoder.
-    :param x: input to the autoencoder
-    :param reuse: True -> Reuse the encoder variables, False -> Create or search of variables before creating
-    :return: tensor which is the hidden latent variable of the autoencoder.
-    """
+    # """
+    # Encode part of the autoencoder.
+    # :param x: input to the autoencoder
+    # :param reuse: True -> Reuse the encoder variables, False -> Create or search of variables before creating
+    # :return: tensor which is the hidden latent variable of the autoencoder.
+    # """
 
     with tf.variable_scope('Encoder') as scope:
         if reuse:
@@ -347,13 +346,13 @@ def encoder(self, x, reuse = False):
 
 
 def discriminator(self, z, z_dim, reuse=False):    
-    """
-    Discriminator that is used to match the posterior distribution with a given prior distribution.
-    :param z: tensor of shape [batch_size, z_dim]
-    :param reuse: True -> Reuse the discriminator variables,
-                  False -> Create or search of variables before creating
-    :return: tensor of shape [batch_size, 1]
-    """
+    # """
+    # Discriminator that is used to match the posterior distribution with a given prior distribution.
+    # :param z: tensor of shape [batch_size, z_dim]
+    # :param reuse: True -> Reuse the discriminator variables,
+    #               False -> Create or search of variables before creating
+    # :return: tensor of shape [batch_size, 1]
+    # """
     with tf.variable_scope('Discriminator') as scope:
         if reuse:
             scope.reuse_variables()
@@ -387,13 +386,13 @@ def discriminator(self, z, z_dim, reuse=False):
 
 
 def discriminator2(self, z, z_dim, reuse=False):    
-    """
-    Discriminator that is used to match the posterior distribution with a given prior distribution.
-    :param z: tensor of shape [batch_size, z_dim]
-    :param reuse: True -> Reuse the discriminator variables,
-                  False -> Create or search of variables before creating
-    :return: tensor of shape [batch_size, 1]
-    """
+    # """
+    # Discriminator that is used to match the posterior distribution with a given prior distribution.
+    # :param z: tensor of shape [batch_size, z_dim]
+    # :param reuse: True -> Reuse the discriminator variables,
+    #               False -> Create or search of variables before creating
+    # :return: tensor of shape [batch_size, 1]
+    # """
     with tf.variable_scope('Discriminator2') as scope:
         if reuse:
             scope.reuse_variables()
@@ -425,12 +424,12 @@ def discriminator2(self, z, z_dim, reuse=False):
         return output
 
 def decoder(self, z, reuse=False):
-    """
-    Decoder part of the autoencoder.
-    :param z: input to the decoder
-    :param reuse: True -> Reuse the decoder variables, False -> Create or search of variables before creating
-    :return: tensor which should ideally be the input given to the encoder.
-    """
+    # """
+    # Decoder part of the autoencoder.
+    # :param z: input to the decoder
+    # :param reuse: True -> Reuse the decoder variables, False -> Create or search of variables before creating
+    # :return: tensor which should ideally be the input given to the encoder.
+    # """
 
     with tf.variable_scope('Decoder') as scope:
         if reuse:
@@ -461,20 +460,19 @@ def decoder(self, z, reuse=False):
         return h
 
 def discriminatorB(self, z, z_dim, reuse = False):    
-    
-    """
-    Discriminator takes the real data and try ti differentiate between different batches
-    :param x: tensor of shape [batch_size, x_dim]
-    :param batch: tensor of shape [batch_size] -> batchinfo of the train data
-    :param reuse: True -> Reuse the discriminator variables,False -> Create or search of variables before creating
-    :return: tensor of shape [batch_size, 1]
-    """
-    '''
-    x_ = pd.DataFrame(x.numpy())
-    x_ = pd.concat([x_, batch], axis = 1)
-    x = torch.tensor(x.values)
-    x_dim = torch.tensor(721)
-    '''
+    # """
+    # Discriminator takes the real data and try ti differentiate between different batches
+    # :param x: tensor of shape [batch_size, x_dim]
+    # :param batch: tensor of shape [batch_size] -> batchinfo of the train data
+    # :param reuse: True -> Reuse the discriminator variables,False -> Create or search of variables before creating
+    # :return: tensor of shape [batch_size, 1]
+    # """
+    # '''
+    # x_ = pd.DataFrame(x.numpy())
+    # x_ = pd.concat([x_, batch], axis = 1)
+    # x = torch.tensor(x.values)
+    # x_dim = torch.tensor(721)
+    # '''
     
     with tf.variable_scope('discriminatorB') as scope:
         if reuse:
@@ -509,11 +507,6 @@ def discriminatorB(self, z, z_dim, reuse = False):
         output = dense(h, self.d_h_dim[0], self.N_batch, name='disb_output')
         return output
 
-"""
-
-train = True #"True for training, False for testing [False]")
-
-"""
 
 class scDREAMER(object):
     

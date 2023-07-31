@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>scDREAMER &mdash; scDREAMER 0.1 documentation</title>
+  <title>scDREAMER API &mdash; scDREAMER 0.1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -18,7 +18,6 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="scDREAMER_SUP" href="scDREAMER_SUP.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
@@ -43,8 +42,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">scDREAMER</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scDREAMER_SUP.html">scDREAMER_SUP</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">scDREAMER API</a></li>
 </ul>
 
         </div>
@@ -61,7 +59,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">scDREAMER</li>
+      <li class="breadcrumb-item active">scDREAMER API</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/scDREAMER.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -71,29 +69,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="scdreamer">
-<h1>scDREAMER<a class="headerlink" href="#scdreamer" title="Permalink to this headline"></a></h1>
-<dl class="py function">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">(sess,</span> <span class="pre">batch,</span> <span class="pre">cell_type,</span> <span class="pre">name,</span> <span class="pre">epoch</span> <span class="pre">=</span> <span class="pre">300,</span> <span class="pre">lr=0.0007,</span> <span class="pre">beta1=0.9,</span> <span class="pre">batch_size=128,</span> <span class="pre">X_dim=2000,</span> <span class="pre">z_dim=10,</span> <span class="pre">dataset_name='Pancreas',checkpoint_dir='checkpoint',</span> <span class="pre">sample_dir='samples',</span> <span class="pre">result_dir</span> <span class="pre">=</span> <span class="pre">'result',</span> <span class="pre">num_layers</span> <span class="pre">=</span> <span class="pre">1,</span> <span class="pre">g_h_dim</span> <span class="pre">=</span> <span class="pre">[512,</span> <span class="pre">256,</span> <span class="pre">0,</span> <span class="pre">0],</span> <span class="pre">d_h_dim</span> <span class="pre">=</span> <span class="pre">[512,</span> <span class="pre">256,</span> <span class="pre">0,</span> <span class="pre">0],</span> <span class="pre">gen_activation</span> <span class="pre">=</span> <span class="pre">'sig',</span> <span class="pre">leak</span> <span class="pre">=</span> <span class="pre">0.2,</span> <span class="pre">keep_param</span> <span class="pre">=</span> <span class="pre">0.9,</span> <span class="pre">trans</span> <span class="pre">=</span> <span class="pre">'sparse',is_bn</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">g_iter</span> <span class="pre">=</span> <span class="pre">2,</span> <span class="pre">lam=1.0,</span> <span class="pre">sampler</span> <span class="pre">=</span> <span class="pre">'normal'):</span></span></dt>
-<dd><p>This function takes two numbers as input and returns their sum.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>batch</strong> (<em>string</em>) – obs key for batch information</p></li>
-<li><p><strong>cell_type</strong> (<em>int</em>) – obs key for cell type information. Only used for plotting</p></li>
-<li><p><strong>name</strong> – name</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The sum of the two numbers.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
+  <section id="scdreamer-api">
+<h1>scDREAMER API<a class="headerlink" href="#scdreamer-api" title="Permalink to this headline"></a></h1>
 </section>
 
 
@@ -101,7 +78,6 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="scDREAMER_SUP.html" class="btn btn-neutral float-right" title="scDREAMER_SUP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

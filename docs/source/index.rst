@@ -38,5 +38,11 @@ Ajita Shree\*, Musale Krushna Pavan\*, Hamim Zafar. scDREAMER: atlas-level integ
 
    installation
    scDREAMER
-   scDREAMER_SUP
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 

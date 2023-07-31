@@ -904,7 +904,63 @@ def discriminatorB(self, z, z_dim, reuse=False):
 
 
 class scDREAMER(object):
-    def __init__(
+    """scDREAMER class parameter setting
+
+        :param sess: tensorflow session
+        :type sess: .tf.Session
+        :param batch: obs key containing the batch information
+        :type batch: string
+        :param cell_type: obs key containing the cell type information
+        :type cell_type: string
+        :param name: path to the AnnData(adata) object.
+            adata.X contains counts info. 
+            adata.obs contains batch and celltype info
+        :type name: AnnData
+        :param epoch: number of epoches to train the model, defaults to 300
+        :type epoch: int, optional
+        :param lr: learning rate, defaults to 0.0007
+        :type lr: float, optional
+        :param beta1: beta1, defaults to 0.9
+        :type beta1: float, optional
+        :param batch_size: batch size, defaults to 128
+        :type batch_size: int, optional
+        :param X_dim: Top heighly variable genes, defaults to 2000
+        :type X_dim: int, optional
+        :param z_dim: Embeddings dimention, defaults to 10
+        :type z_dim: int, optional
+        :param dataset_name: dataset name, defaults to "Pancreas"
+        :type dataset_name: str, optional
+        :param checkpoint_dir: check point directory, defaults to "checkpoint"
+        :type checkpoint_dir: str, optional
+        :param sample_dir: samples directory, defaults to "samples"
+        :type sample_dir: str, optional
+        :param result_dir: resutls directory, defaults to "result"
+        :type result_dir: str, optional
+        :param num_layers: number of hidden layers, defaults to 1
+        :type num_layers: int, optional
+        :param g_h_dim: neurons in encoder hidden layers (uses only num_layers), defaults to [512, 256, 0, 0]
+        :type g_h_dim: list, optional
+        :param d_h_dim: neurons in decoder hidden layers (uses only num_layers), defaults to [512, 256, 0, 0]
+        :type d_h_dim: list, optional
+        :param gen_activation: activation function, defaults to "sig"
+        :type gen_activation: str, optional
+        :param leak: leak, defaults to 0.2
+        :type leak: float, optional
+        :param keep_param: keep, defaults to 0.9
+        :type keep_param: float, optional
+        :param trans: translation, defaults to "sparse"
+        :type trans: str, optional
+        :param is_bn: batch normalization, defaults to False
+        :type is_bn: bool, optional
+        :param g_iter: generator iterations, defaults to 2
+        :type g_iter: int, optional
+        :param lam: lam, defaults to 1.0
+        :type lam: float, optional
+        :param sampler: z sampler, defaults to "normal"
+        :type sampler: str, optional
+        """
+        
+    def __inti__(
         self,
         sess,
         batch,
@@ -932,14 +988,8 @@ class scDREAMER(object):
         lam=1.0,
         sampler="normal",
     ):
-        """
-        Main class of scDREAMER
-        :param sess: A tensorflow session
-        :param str batch: obs key of the anndata for the batch info
-        :param str cell_type: obs key of the anndata for the cell type info
-        :param str name: path of the dataset
-        :param int epoch: number of epoch
-        """
+        
+        
         self.sess = sess
         self.epoch = epoch
         self.lr = lr

@@ -34,8 +34,9 @@ Ajita Shree\*, Musale Krushna Pavan\*, Hamim Zafar. scDREAMER: atlas-level integ
 .. _bioRxiv: https://www.biorxiv.org/content/10.1101/2022.07.12.499846v1
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
+   self
    installation
    scDREAMER
 

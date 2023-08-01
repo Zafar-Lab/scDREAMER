@@ -1,5 +1,5 @@
 scDREAMER API
 =============
 
-.. .. autoclass:: scDREAMER.model.scDREAMER
-..     :members:
+.. autoclass:: scDREAMER.model.scDREAMER
+    :members:

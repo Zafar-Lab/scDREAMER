@@ -3,4 +3,4 @@ scanpy
 anndata
 numpy
 sphinx-rtd-theme==1.2.2
-Sphinx
+sphinx==5.3.0

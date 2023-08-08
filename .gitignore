@@ -1,3 +1,6 @@
 scDREAMER/docs/build/
 __pycache__/
 build/
+.ipynb_checkpoints/
+.virtual_documents/
+*.csv

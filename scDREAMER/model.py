@@ -960,7 +960,7 @@ class scDREAMER(object):
         :type sampler: str, optional
         """
         
-    def __inti__(
+    def __init__(
         self,
         sess,
         batch,

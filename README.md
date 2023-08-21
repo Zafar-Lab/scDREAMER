@@ -31,6 +31,9 @@ Check out the following Colab notebook to get a flavor of a typical workflow for
 2. [scDREMER-SUP applied to human immune cells integration task](https://colab.research.google.com/drive/1t9g7dLKeHfYbPXpTygO1DuXwWV4sJlSB?usp=sharing)
 3. [scDREAMER-SUP applied to human immune cells integration task under 50% missing cell labels setting](https://colab.research.google.com/drive/11DMVjIzx53xt6FBiv8l1YGFl-fVUoJGT?usp=sharing)
 
+## Documentation
+read the docs: [https://scdreamer.readthedocs.io/en/latest/](https://scdreamer.readthedocs.io/en/latest/)
+
 ## Contributing
 In case of any bug reports, enhancement requests, general questions, and other contributions, please create an issue. For more substantial contributions, please fork this repo, push your changes to your fork, and submit a pull request with a good commit message.
 

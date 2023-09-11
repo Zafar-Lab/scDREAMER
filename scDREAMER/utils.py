@@ -1,5 +1,10 @@
+# +
+import warnings
+warnings.filterwarnings('ignore')
+
 import tensorflow as tf2
 import scipy
+# -
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 

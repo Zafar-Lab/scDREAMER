@@ -5,7 +5,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 
 import numpy as np
-from src.utils_new_semi import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
+from src.utils import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
 import pandas as pd
 
 # Class Functions:
@@ -41,7 +41,7 @@ def build_model(self):
     self.expression = self.x_input               
     self.proj = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='projection')
   
-    log_library_size = np.log(np.sum(self.data_train, axis=1)) 
+    log_library_size = np.log(np.sum(self.data_train, axis=1)+1) 
     mean, variance = np.mean(log_library_size), np.var(log_library_size)
 
     library_size_mean = mean
@@ -205,17 +205,17 @@ def train_cluster(self):
     # double and half
     # learning_rate=self.lr,beta1=self.beta1 #0.0002 # later 0.00005 for nan issue in immune human
     # 0.00001 for hum mouse, 0.00005 for 50% labels missing
-    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = 0.0002,beta1 = self.beta1).minimize(self.autoencoder_loss) #self.disb_vars, var_list = self.gen_vars
+    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr_ae,beta1 = self.beta1).minimize(self.autoencoder_loss) #self.disb_vars, var_list = self.gen_vars
 
     # Discriminator D2
     
-    discriminator2_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr,
+    discriminator2_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr_dis,
                                                       beta1=self.beta1).minimize(self.dis2_loss,
                                                                                   var_list=self.dis2_vars)
     
     # Discriminator batch: Classifier....
     
-    batchClassifier_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr,
+    batchClassifier_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr_bc,
                                               beta1 = self.beta1).minimize(self.disb_loss, var_list = self.disb_vars)
     
     #classifier_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr, beta1 = self.beta1).minimize(self.classifier_loss)
@@ -233,26 +233,31 @@ def train_cluster(self):
     
     for ep in range(self.epoch):
     #for it in range(num_batch_iter):
+    
         d_loss_curr = g_loss_curr = a_loss_curr = np.inf
         self._is_train = True
-
-        index = 0
-        np.random.shuffle(indices)
+        
+        if (self.shuffle_type == 1):
+            index = 0
+            np.random.shuffle(indices)
+            
 
         for it in range(num_batch_iter):
 
-            # Selecting mini batch
-            
-            batch_indices = indices[index : index + self.batch_size]
-            
-            batch_x = self.data_train[batch_indices, :]
-            X_ = self.batch_train[batch_indices, :]
-            labels_ = self.labels_enc[batch_indices, :]
-            labels_n = self.labels_na[batch_indices]            
-            index += self.batch_size
-            
-            #batch_x, X_, labels_, labels_n = self.next_batch(self.data_train, self.batch_train, self.labels_enc, self.labels_na, self.train_size)
-            
+            # Selecting mini batch            
+            if (self.shuffle_type == 1):
+                
+                batch_indices = indices[index : index + self.batch_size]
+                batch_x = self.data_train[batch_indices, :]
+                X_ = self.batch_train[batch_indices, :]  
+                labels_ = self.labels_enc[batch_indices, :]
+                labels_n = self.labels_na[batch_indices] 
+                index += self.batch_size
+                
+            elif (self.shuffle_type == 2):
+                batch_x, X_, labels_, labels_n = self.next_batch(self.data_train, self.batch_train, self.labels_enc, self.labels_na, self.train_size)                
+
+                       
             labels_n_ = []
             
             for i in labels_n:
@@ -567,25 +572,28 @@ def decoderU(self, u, reuse = False):
     h = tf.nn.dropout(lrelu(dense(u , self.u_dim + self.N_celltype, 8, name = 'decu_lin'),alpha = self.leak), keep_prob = self.keep_prob)
     #h = tf.nn.dropout(lrelu(dense(h, 8,10, name = 'decu_lin2'),alpha = self.leak), keep_prob = self.keep_prob)
            
-    zconst_m = dense(h, 8, 10, name = 'decu_z_post_m')                
-    zconst_v = tf.exp(dense(h, 8, 10, name = 'decu_z_post_v')) #self.z_dim
+    zconst_m = dense(h, 8, self.z_dim, name = 'decu_z_post_m')                
+    zconst_v = tf.exp(dense(h, 8, self.z_dim, name = 'decu_z_post_v')) #self.z_dim
         
     return zconst_m, zconst_v
 
 
 class scDREAMER(object):
     
-    def __init__(self, sess, batch, cell_type, plot_cell_type, name, epoch = 200, lr=0.0007, beta1=0.9, 
-                 batch_size=256, X_dim=2000, 
+    def __init__(self, sess, batch, cell_type, plot_cell_type, name, epoch = 200,  
+                 lr_ae = 0.0002, lr_dis = 0.0007,lr_bc=0.0007, beta1=0.9, 
+                 batch_size=128, X_dim=2000, 
                  z_dim=10, dataset_name='Pancreas',
                  checkpoint_dir='checkpoint', sample_dir='samples', result_dir = 'result', num_layers = 2, 
                  g_h_dim = [512, 256, 0, 0],d_h_dim = [512, 256, 0, 0], gen_activation = 'sig', leak = 0.2, 
                  keep_param = 0.9, trans = 'sparse',is_bn = False,
-                 g_iter = 2, lam=1.0, sampler = 'normal'):
+                 g_iter = 2, lam=1.0, sampler = 'normal', shuffle_type = 1, sparseIP = 0):
 
         self.sess = sess
         self.epoch = epoch
-        self.lr = lr
+        self.lr_ae = lr_ae
+        self.lr_dis = lr_dis
+        self.lr_bc = lr_bc
         self.beta1 = beta1
         self.batch_size = batch_size
         self.X_dim = X_dim
@@ -613,9 +621,16 @@ class scDREAMER(object):
         self.plot_cell_type = plot_cell_type
         self.name = name
         self.batch = batch
+        self.shuffle_type = shuffle_type
+        self.sparseIP = sparseIP
         
         if self.trans == 'sparse':
-            self.data_train, self.data_test, self.scale, self.labels_train, self.labels_test, self.batch_train, self.batch_test, self.batch_info, self.labels_enc, self.labels_na, self.labels_ground = load_gene_mtx(self.dataset_name, transform=False, count=False, actv=self.gen_activation, batch = self.batch, cell_type = self.cell_type, plot_cell_type = self.plot_cell_type, name = self.name)
+            self.data_train, self.data_test, self.scale, self.labels_train, self.labels_test, \
+            self.batch_train, self.batch_test, self.batch_info, self.labels_enc, self.labels_na,\
+            self.labels_ground = load_gene_mtx(self.dataset_name, transform=False, count=False, \
+                                               actv=self.gen_activation, batch = self.batch,\
+                                               cell_type = self.cell_type, plot_cell_type = self.plot_cell_type,\
+                                               name = self.name, sparseIP = self.sparseIP)
             
             self.N_batch = self.batch_train.shape[1]
             self.N_celltype = self.labels_enc.shape[1]

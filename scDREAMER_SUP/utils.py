@@ -63,7 +63,21 @@ def eval_cluster_on_test(self,ep, name):
     labels = self.labels_test
     batch_label = self.batch_test
             
-    latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder, self.batch_input: batch_label, self.labels: labels_, self.keep_prob: 1.0})
+    #latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder, self.batch_input: batch_label, self.labels: labels_, self.keep_prob: 1.0})
+    
+    start = 0
+    end = 15000 # size of each pass
+    latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder[start:end], self.batch_input:batch_label[start:end], self.labels: labels_[start:end], self.keep_prob: 1.0})
+    
+    while (end < len(inp_encoder)):
+
+        #print ("hi")
+        start = end
+        end = min(end + 15000, len(inp_encoder))
+
+        mat = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder[start:end], self.batch_input: batch_label[start:end], self.labels: labels_[start:end], self.keep_prob: 1.0})
+
+        latent_matrix = np.concatenate((latent_matrix, mat), axis = 0)
     
     print ('latent_matrix shape', latent_matrix.shape)
     print (labels.shape)
@@ -94,7 +108,7 @@ def eval_cluster_on_test(self,ep, name):
     print('NMI = {}'. 
           format(NMI)) 
 
-def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, hvg=2000):
+def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, sparseIP, hvg=2000):
     
     print('Preprocessing...')
     Ann = sc.read_h5ad(data_path)
@@ -111,7 +125,7 @@ def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, hvg=2000):
         batch_key=batch,
         subset=True)
   
-    if (name == "Lung" or name == "Human_Mouse"):
+    if (sparseIP == 1):
         df_final = pd.DataFrame.sparse.from_spmatrix(Ann.X) # Lung, Simulation1, Simulation 2
     else:
         df_final = pd.DataFrame(Ann.X) # Immune , Pan
@@ -119,8 +133,8 @@ def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, hvg=2000):
     df_final = df_final.reset_index(drop = True)
     data = df_final.to_numpy()
     
-    if plot_cell_type:
-        labels = Ann.obs[plot_cell_type].to_list()
+    if cell_type:
+        labels = Ann.obs[cell_type].to_list()
 
     #AJ: Convert to categorical instead of this...
     t_ = Ann.obs[batch] #.to_list()
@@ -149,11 +163,12 @@ def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, hvg=2000):
     return data, labels, batch_info_enc, batch_info, labels_enc, labels_na, labels_ground
 
 
-def load_gene_mtx(dataset_name, name, transform = True, count = True, actv = 'sig', batch = "batch", cell_type = "cell type", plot_cell_type = "cell type"):
+def load_gene_mtx(dataset_name, name, transform = True, count = True, actv = 'sig', batch = "batch", cell_type = "cell type", plot_cell_type = "cell type", sparseIP = 0):
+    
     print('Loading dataset')
     #B = "tech"
     #C = "celltype"
-    data, labels, batch_info_enc, batch_info, labels_enc, labels_na, labels_ground = read_h5ad(dataset_name, batch, cell_type, plot_cell_type, name)
+    data, labels, batch_info_enc, batch_info, labels_enc, labels_na, labels_ground = read_h5ad(dataset_name, batch, cell_type, plot_cell_type, name, sparseIP)
          
     if count == False:
         data = np.log2(data+1)

@@ -1,6 +1,6 @@
 # scDREAMER
 ## Overview
-**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. The jupyter notebooks for reproducibility of results in the manuscript are available at [https://github.com/Zafar-Lab/scDREAMER-experiments](https://github.com/Zafar-Lab/scDREAMER-experiments)See our preprint below for more details. 
+**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. The jupyter notebooks for reproducibility of results in the manuscript are available at [https://github.com/Zafar-Lab/scDREAMER-experiments](https://github.com/Zafar-Lab/scDREAMER-experiments). See our preprint below for more details. 
 
 <img src='architecture.png'>
 

@@ -27,12 +27,13 @@ conda activate scdreamer
 ## Tutorials
 Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER and scDREAMER-SUP ([Link to Datasets](https://drive.google.com/drive/folders/1alw75wwWRg9KXopUccPhMh6N3b6dOoE9?usp=sharing)) below. 
 
-1. [scDREAMER applied to human immune integration task](https://colab.research.google.com/drive/10wWVPVeWgHfZL_B8_fRzRIDE1wUq2NvO?usp=sharing) 
-2. [scDREMER-SUP applied to human immune cells integration task](https://colab.research.google.com/drive/1t9g7dLKeHfYbPXpTygO1DuXwWV4sJlSB?usp=sharing)
-3. [scDREAMER-SUP applied to human immune cells integration task under 50% missing cell labels setting](https://colab.research.google.com/drive/11DMVjIzx53xt6FBiv8l1YGFl-fVUoJGT?usp=sharing)
+1. [scDREAMER applied to human immune integration task](https://colab.research.google.com/drive/10wWVPVeWgHfZL_B8_fRzRIDE1wUq2NvO?usp=sharing)
+2. [scDREAMER applied to large dataset integration](https://colab.research.google.com/drive/1fSlsDkcGlWl2Y_7zzk_cFJcdweEhBsWE?usp=sharing)
+3. [scDREMER-SUP applied to human immune cells integration task](https://colab.research.google.com/drive/1t9g7dLKeHfYbPXpTygO1DuXwWV4sJlSB?usp=sharing)
+4. [scDREAMER-SUP applied to human immune cells integration task under 50% missing cell labels setting](https://colab.research.google.com/drive/11DMVjIzx53xt6FBiv8l1YGFl-fVUoJGT?usp=sharing)
 
 ## Documentation
-read the docs: [https://scdreamer.readthedocs.io/en/latest/](https://scdreamer.readthedocs.io/en/latest/)
+Read the docs: [https://scdreamer.readthedocs.io/en/latest/](https://scdreamer.readthedocs.io/en/latest/)
 
 ## Contributing
 In case of any bug reports, enhancement requests, general questions, and other contributions, please create an issue. For more substantial contributions, please fork this repo, push your changes to your fork, and submit a pull request with a good commit message.

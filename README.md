@@ -1,6 +1,6 @@
 # scDREAMER
 ## Overview
-**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. See our preprint below for more details. 
+**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. The jupyter notebooks for reproducibility of results in the manuscript are available at [https://github.com/Zafar-Lab/scDREAMER-experiments](https://github.com/Zafar-Lab/scDREAMER-experiments)See our preprint below for more details. 
 
 <img src='architecture.png'>
 
@@ -25,7 +25,7 @@ conda activate scdreamer
 5. Large datasets with ~1 million cells
 
 ## Tutorials
-Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER and scDREAMER-SUP ([Link to Datasets](https://drive.google.com/drive/folders/1alw75wwWRg9KXopUccPhMh6N3b6dOoE9?usp=sharing)) below. The jupyter notebooks for reproducibility of results in the manuscript are available at [https://github.com/Zafar-Lab/scDREAMER-experiments](https://github.com/Zafar-Lab/scDREAMER-experiments)
+Check out the following Colab notebook to get a flavor of a typical workflow for data integration using scDREAMER and scDREAMER-SUP ([Link to Datasets](https://drive.google.com/drive/folders/1alw75wwWRg9KXopUccPhMh6N3b6dOoE9?usp=sharing)) below. 
 
 1. [scDREAMER applied to human immune integration task](https://colab.research.google.com/drive/10wWVPVeWgHfZL_B8_fRzRIDE1wUq2NvO?usp=sharing) 
 2. [scDREMER-SUP applied to human immune cells integration task](https://colab.research.google.com/drive/1t9g7dLKeHfYbPXpTygO1DuXwWV4sJlSB?usp=sharing)

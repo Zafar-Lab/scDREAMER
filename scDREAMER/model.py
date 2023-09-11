@@ -477,9 +477,6 @@ class scDREAMER(object):
         self.X_dim = X_dim
         self.z_dim = z_dim
         self.dataset_name = dataset_name
-        self.checkpoint_dir = checkpoint_dir
-        self.sample_dir = sample_dir
-        self.result_dir = result_dir
         self.num_layers = num_layers
         self.g_h_dim = g_h_dim  # Fully connected layers for Generator
         self.d_h_dim = d_h_dim  # Fully connected layers for Discriminator

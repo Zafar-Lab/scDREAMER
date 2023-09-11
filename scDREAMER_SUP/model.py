@@ -1,20 +1,27 @@
-# import tensorflow as tf
+# +
+import warnings
+warnings.filterwarnings('ignore')
 
 import tensorflow.compat.v1 as tf
+# -
 
 tf.disable_v2_behavior() 
 
 import numpy as np
-from src.utils import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
+from utils import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
 import pandas as pd
 
 # Class Functions:
 def build_model(self):
 
+    """
+    Build the complete tensorflow network of the model
+    """
+        
     self.x_input = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='Input')
     self.x_input_ = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='Input')
     self.x_target = tf.placeholder(dtype=tf.float32, shape=[None, self.X_dim], name='Target')
-    self.batch_input = tf.placeholder(dtype = tf.float32, shape=[None, self.N_batch], name='batch_input') # 6, 3
+    self.batch_input = tf.placeholder(dtype = tf.float32, shape=[None, self.N_batch], name='batch_input') 
     self.batch_input_ = tf.placeholder(dtype = tf.float32, shape=[None, self.N_batch], name='batch_input')
     self.labels = tf.placeholder(dtype = tf.float32, shape=[None, self.N_celltype], name='celltype_input')
     self.labels_naT = tf.placeholder(dtype = tf.float32, shape=[None,], name='celltype_input')
@@ -23,19 +30,18 @@ def build_model(self):
     self.real_distribution = tf.placeholder(dtype=tf.float32, shape=[None, self.z_dim], name='Real_distribution')
     self.kl_scale = tf.placeholder(tf.float32, (), name='kl_scale')
     
-    self.kl_scale = 0.001 # 0.01, 0, 0.001
+    self.kl_scale = 0.001 
     self.dropout_rate = 0.1
     self.training_phase = True
     self.n_layers = self.num_layers
     self.n_latent = self.z_dim
     
-    # AJ
     self.enc_input = tf.concat([self.x_input, self.batch_input],1)
     self.enc_input_ = tf.concat([self.x_input_, self.batch_input_],1)
     print('encoder input shape ',self.enc_input)
 
     # AJ: Encoder output...
-    self.encoder_output, self.z_post_m, self.z_post_v, self.l_post_m, self.l_post_v = self.encoder(self.enc_input) # self.x_input
+    self.encoder_output, self.z_post_m, self.z_post_v, self.l_post_m, self.l_post_v = self.encoder(self.enc_input)
     self.encoder_output_, self.z_post_m_, self.z_post_v_, self.l_post_m_, self.l_post_v_ = self.encoder(self.enc_input_, reuse = True) 
 
     self.expression = self.x_input               
@@ -54,8 +60,6 @@ def build_model(self):
 
     self.library = self.sample_gaussian(self.l_post_m, self.l_post_v)
     
-    # AJ
-    #self.decoder_output = self.decoder(self.z)  
     print('decoder input shape ',tf.concat([self.z, self.batch_input],1))
 
     self.decoder_output = self.decoder(tf.concat([self.z, self.batch_input],1))             
@@ -75,49 +79,24 @@ def build_model(self):
     # Discriminator D2
     self.dis2_real_logit = self.discriminator2(self.x_target, self.X_dim) # True data
     self.dis2_fake_logit = self.discriminator2(self.decoder_output2, self.X_dim, reuse=True) # from decoder network
-    
-    # Discriminator D_batch : discriminate between different batches info
-    # pass the encoded data; self.x_target, self.X_dim
-    
+        
     self.disb_real_logit = self.batchClassifier(self.z, self.z_dim) # True data
     
-    # self.N_celltype, Immune_human = 16
     self.classifier_logit = dense(self.z, self.z_dim, self.N_celltype, name = 'classifier')
     
-    #self.classifier_logit_labels = tf.multiply(self.classifier_logit, self.labels_naT) # 1 where labels pr, 0 not NA
-    #self.labels_labels = tf.multiply(self.labels, self.labels_naT)
-    
     self.inferred = tf.nn.softmax(self.classifier_logit)
-    #self.inferred  = tf.argmax(self.inferred , 1)
-    #self.inferred = (self.inferred >= tf.reduce_max(self.inferred))#.type(torch.uint8)   
-    
-    print ("inferred check", tf.reduce_max(self.inferred))
-    
-    #self.classifier_logit = self.classifier(self.z)
-    self.encoderU_output, self.u_post_m, self.u_post_v = self.encoderU(tf.concat([self.z, self.inferred], 1)) # self.labels
-    self.u = self.sample_gaussian(self.u_post_m, self.u_post_v)
-    
-    #print ("No of cell types", self.N_celltype)
-    #print("classifier logit is: ", self.classifier_logit)
-    #print("u is: ", self.u)
-    #print("z is: ", self.z)
-    
-    self.zconst_m, self.zconst_v = self.decoderU(tf.concat([self.u, self.inferred], 1)) 
+
+    # Hierarchically stacked Encoder-Decoder
+    self.encoderY_output, self.y_post_m, self.y_post_v = self.encoderY(tf.concat([self.z, self.inferred], 1)) # self.labels
+    self.y = self.sample_gaussian(self.y_post_m, self.y_post_v)
+
+    self.zconst_m, self.zconst_v = self.decoderY(tf.concat([self.y, self.inferred], 1)) 
  
-    
-    ### Loss functions below: 
-    # Reconstruction loss 
     capL = 1e-4 #1e-8
     capU = 1e4 #1e8
 
-    
-    #recon_loss = 0
+
     recon_loss = self.zinb_model(self.expression, self.x_post_rate, local_dispersion, self.x_post_dropout)
-    
-    # LLZ
-    #recons_lossZ = (tf.constant(np.pi) * self.zconst_v) * np.exp(-0.5*((z_numpy - self.zconst_m)/self.zconst_v)**2)
-    #expr = -0.5 * tf.square((self.z - self.zconst_m)/self.zconst_v) - tf.log(self.zconst_v)
-    #recons_lossZ = tf.reduce_sum(expr, axis = -1)
     
     self.kl_gauss_l = 0.5 * tf.reduce_sum(- tf.log(tf.math.minimum(tf.math.maximum(self.l_post_v, capL), capU))  \
                                       + self.l_post_v/local_l_variance \
@@ -129,22 +108,16 @@ def build_model(self):
                                       + tf.square(self.z_post_m - self.zconst_m)/self.zconst_v  \
                                       + tf.log(tf.math.minimum(tf.math.maximum(self.zconst_v, capL), capU)) - 1, 1)
        
-    self.kl_gauss_u = 0.5 * tf.reduce_sum(- tf.log(tf.math.minimum(tf.math.maximum(self.u_post_v, capL), capU)) + self.u_post_v + tf.square(self.u_post_m) - 1, 1)
-    
-    #self.kl_gauss_z = 0.5 * tf.reduce_sum(- tf.log(tf.math.minimum(tf.math.maximum(self.z_post_v, capL), capU)) + self.z_post_v + tf.square(self.z_post_m) - 1, 1)
+    self.kl_gauss_y = 0.5 * tf.reduce_sum(- tf.log(tf.math.minimum(tf.math.maximum(self.y_post_v, capL), capU)) \
+                                          + self.y_post_v + tf.square(self.y_post_m) - 1, 1)
 
     print ('KL gaussian z', self.kl_gauss_z)
     print ('KL gaussian l', self.kl_gauss_l)
 
-    # Evidence lower bound - ELBO : KLscale to prevent posterior collapse...
-    #self.ELBO_gauss = tf.reduce_mean(recon_loss - self.kl_gauss_l - self.kl_scale * self.kl_gauss_z) - tf.reduce_sum(tf.pow(self.z - self.z_, 2)) 
-    
-    #recons_lossZ
-    self.ELBO_gauss = tf.reduce_mean(recon_loss - self.kl_scale*self.kl_gauss_l - self.kl_scale*self.kl_gauss_z - self.kl_scale*self.kl_gauss_u) - self.kl_scale*tf.reduce_sum(tf.pow(self.z - self.z_, 2)) 
+    self.ELBO_gauss = tf.reduce_mean(recon_loss - self.kl_scale*self.kl_gauss_l - self.kl_scale*self.kl_gauss_z\
+                                     - self.kl_scale*self.kl_gauss_y) - \
+                            self.kl_scale*tf.reduce_sum(tf.pow(self.z - self.z_, 2)) 
 
-    
-    # - is added to ELBO because we maximize the ELBO expression & maximize classifier cross entropy loss -> -loss minimize cross entropy
-    
     self.masked_classifier_logit = tf.boolean_mask(self.classifier_logit, self.labels_naT)
     self.masked_labels =  tf.boolean_mask(self.labels, self.labels_naT)
     
@@ -154,125 +127,75 @@ def build_model(self):
       tf.equal(tf.size(class_loss_vec), 0), 
       lambda : tf.constant(0.0), lambda: 10*tf.reduce_mean(class_loss_vec)
     )
-    
-    """
-    # Filter all NAs for semi-supervised setting.
-    #print ("labels are here", self.labels)
-    #y = tf.where(x < 1., 0., 1. / x)
-    #y = tf.where(self.labels_naT == 0)
-    
-    #print ("y is", y)
 
-    #self.classifier_loss = 10*tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit_labels, labels = self.labels_labels))
-    
-    self.classifier_loss = tf.nn.softmax_cross_entropy_with_logits(logits = self.classifier_logit, labels = self.labels)
-    
-    #self.classifier_loss = 10*tf.reduce_mean(self.classifier_loss)#tf.multiply(self.classifier_loss, self.labels_naT))
- 
-    #print("classifier before", 10*tf.reduce_mean(self.classifier_loss).eval())
-    self.classifier_loss = 10*tf.reduce_mean(tf.multiply(self.classifier_loss, self.labels_naT))
-
-    #print ("classifier after", self.classifier_loss.eval())
-    """
     self.autoencoder_loss = - self.ELBO_gauss - tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.disb_real_logit, labels = self.batch_input))- tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis2_real_logit/tf.reduce_sum(self.dis2_real_logit)* self.dis2_fake_logit/tf.reduce_sum(self.dis2_fake_logit)))), capL), capU)) + self.classifier_loss           
-                   
-    # Discriminator D2: minimize distance min max objective function - BD distance between X(generated sample) and X input 
     
     self.dis2_loss = tf.log(tf.math.minimum(tf.math.maximum(tf.reduce_sum(tf.sqrt(tf.abs(self.dis2_real_logit/tf.reduce_sum(self.dis2_real_logit)
                                         * self.dis2_fake_logit/tf.reduce_sum(self.dis2_fake_logit)))), capL), capU)) # epsilon added to avoid Nan
     
-         
-    # 27Apr: AJ : minimize binary cross entropy     
     self.disb_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = self.disb_real_logit, labels = self.batch_input)) #self.batch_input
     
-
                                           
     t_vars = tf.trainable_variables()
-    #self.gen_vars = [var for var in t_vars if 'enc_' in var.name or 'dec_' in var.name] #AS:2109
-
-    #Discriminator D2
-    self.dis2_vars = [var for var in t_vars if 'dis2_' in var.name] #or 'enc_' in var.name or 'dec_' in var.name]
-    
-    # Discriminator DB: AJ
+    self.dis2_vars = [var for var in t_vars if 'dis2_' in var.name]
     self.disb_vars = [var for var in t_vars if 'disb_' in var.name ]
-
     self.saver = tf.train.Saver()
+    
 
 def train_cluster(self):
 
-    print('Cluster DRA on DataSet {} ... '.format(self.dataset_name))
+    print('scDREAMER-Sup on DataSet {} ... '.format(self.dataset_name))
     
-    # double and half
-    # learning_rate=self.lr,beta1=self.beta1 #0.0002 # later 0.00005 for nan issue in immune human
-    # 0.00001 for hum mouse, 0.00005 for 50% labels missing
-    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr_ae,beta1 = self.beta1).minimize(self.autoencoder_loss) #self.disb_vars, var_list = self.gen_vars
-
-    # Discriminator D2
+    autoencoder_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr_ae,beta1 = self.beta1)\
+    .minimize(self.autoencoder_loss) 
     
     discriminator2_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr_dis,
                                                       beta1=self.beta1).minimize(self.dis2_loss,
                                                                                   var_list=self.dis2_vars)
     
-    # Discriminator batch: Classifier....
-    
     batchClassifier_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr_bc,
                                               beta1 = self.beta1).minimize(self.disb_loss, var_list = self.disb_vars)
-    
-    #classifier_optimizer = tf.train.AdamOptimizer(learning_rate = self.lr, beta1 = self.beta1).minimize(self.classifier_loss)
-    
-    
+        
     self.sess.run(tf.global_variables_initializer())
     a_loss_epoch = []
-    d2_loss_epoch = [] # Discriminator D2
-    db_loss_epoch = [] # Discriminator batch
-
-    control = 3 # Generator is updated twice for each Discriminator D1 update
+    d2_loss_epoch = [] 
+    db_loss_epoch = [] 
 
     num_batch_iter = self.total_size // self.batch_size
     indices = np.arange(self.data_train.shape[0])
     
     for ep in range(self.epoch):
-    #for it in range(num_batch_iter):
     
         d_loss_curr = g_loss_curr = a_loss_curr = np.inf
         self._is_train = True
         
-        if (self.shuffle_type == 1):
-            index = 0
-            np.random.shuffle(indices)
+
+        index = 0
+        np.random.shuffle(indices)
             
-
         for it in range(num_batch_iter):
-
-            # Selecting mini batch            
-            if (self.shuffle_type == 1):
+           
                 
-                batch_indices = indices[index : index + self.batch_size]
-                batch_x = self.data_train[batch_indices, :]
-                X_ = self.batch_train[batch_indices, :]  
-                labels_ = self.labels_enc[batch_indices, :]
-                labels_n = self.labels_na[batch_indices] 
-                index += self.batch_size
-                
-            elif (self.shuffle_type == 2):
-                batch_x, X_, labels_, labels_n = self.next_batch(self.data_train, self.batch_train, self.labels_enc, self.labels_na, self.train_size)                
-
+            batch_indices = indices[index : index + self.batch_size]
+            batch_x = self.data_train[batch_indices, :]
+            X_ = self.batch_train[batch_indices, :]  
+            labels_ = self.labels_enc[batch_indices, :]
+            labels_n = self.labels_na[batch_indices] 
+            index += self.batch_size
                        
             labels_n_ = []
             
             for i in labels_n:
                 if i =="NA":
-                    labels_n_ += [False]#[[0 for i in range(1)]] #1 , self.N_celltype
+                    labels_n_ += [False]
                 else:
-                    labels_n_ += [True]#[[1 for i in range(1)]]
+                    labels_n_ += [True]
                 
             labels_n_ = np.array(labels_n_)
-            
-            #print ("na labels", labels_n_)
 
             df = pd.DataFrame(batch_x)
-            col = df.columns[:100] # random col generate
-            for c in col: #[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+            col = df.columns[:100] 
+            for c in col: 
                 df[c] = 0
             
             batch_x_ = df.to_numpy()
@@ -306,16 +229,13 @@ def train_cluster(self):
                         self.x_input_: batch_x_, self.batch_input_: X_,
                         self.keep_prob: self.keep_param})
 
-            """
-            _, classifier_curr = self.sess.run([classifier_optimizer, self.classifier_loss],
-                                            
-                        feed_dict = {
-                        self.labels: labels_,       
-                        self.keep_prob: self.keep_param})
-            """
-
-        print("Epoch : [%d] ,  a_loss = %.4f, d_loss: %.4f , db_loss: %.4f" 
-              % (ep, a_loss_curr, d2_loss_curr, db_loss_curr))
+        a_loss_epoch.append(a_loss_curr) 
+        d2_loss_epoch.append(d2_loss_curr)
+        db_loss_epoch.append(db_loss_curr)
+        
+        if (ep % 10 == 0):
+            print("Epoch : [%d] ,  a_loss = %.4f"#, d_loss: %.4f , db_loss: %.4f" 
+                  % (ep, np.mean(a_loss_epoch)))#, np.mean(d2_loss_epoch), np.mean(db_loss_epoch)))
 
               
         self._is_train = False # enables false after 1st iterations only...to make training process fast
@@ -326,22 +246,16 @@ def train_cluster(self):
             db_loss_curr = 0
             break
 
-        #self.x_target: batch_x,
-        a_loss_epoch.append(a_loss_curr) # total loss getting appended 
-        d2_loss_epoch.append(d2_loss_curr)
-        db_loss_epoch.append(db_loss_curr)
-        
-        if (ep % 50 == 0):
-             self.eval_cluster_on_test(ep, self.name)
-
     self.eval_cluster_on_test(ep, self.name)
 
 def encoder(self, x, reuse = False):
     """
-    Encode part of the autoencoder.
-    :param x: input to the autoencoder
-    :param reuse: True -> Reuse the encoder variables, False -> Create or search of variables before creating
-    :return: tensor which is the hidden latent variable of the autoencoder.
+    Encoder network of VAE
+    
+    :param x: tensor to pass encoder shape 
+    :type x: tensor
+    :param reuse: reuse the weight of network(used at the time of building the network), defaults to False
+    :type reuse: bool, optional
     """
 
     with tf.variable_scope('Encoder') as scope:
@@ -393,14 +307,16 @@ def encoder(self, x, reuse = False):
         return h, z_post_m, z_post_v, l_post_m, l_post_v
 
 
-def discriminator2(self, z, z_dim, reuse=False):    
+def discriminator2(self, z, z_dim, reuse=False):  
+    
     """
-    Discriminator that is used to match the posterior distribution with a given prior distribution.
-    :param z: tensor of shape [batch_size, z_dim]
+    Discriminator that is used to match the input x with reconstructed x.
+    :param x: tensor of shape [batch_size, x_dim]
     :param reuse: True -> Reuse the discriminator variables,
                   False -> Create or search of variables before creating
     :return: tensor of shape [batch_size, 1]
     """
+    
     with tf.variable_scope('Discriminator2') as scope:
         if reuse:
             scope.reuse_variables()
@@ -432,11 +348,16 @@ def discriminator2(self, z, z_dim, reuse=False):
         return output
 
 def decoder(self, z, reuse=False):
+    
     """
     Decoder part of the autoencoder.
+
     :param z: input to the decoder
-    :param reuse: True -> Reuse the decoder variables, False -> Create or search of variables before creating
+    :type z: tensor
+    :param reuse: True -> Reuse the decoder variables, False -> Create or search of variables before creating, defaults to False
+    :type reuse: bool, optional
     :return: tensor which should ideally be the input given to the encoder.
+    :rtype: tensor
     """
 
     with tf.variable_scope('Decoder') as scope:
@@ -470,18 +391,12 @@ def decoder(self, z, reuse=False):
 def batchClassifier(self, z, z_dim, reuse = False):    
     
     """
-    Discriminator takes the real data and try ti differentiate between different batches
-    :param x: tensor of shape [batch_size, x_dim]
+    batchClassifier takes the latent space representation and try to differentiate between different batches
+    :param z: tensor of shape [batch_size, z_dim]
     :param batch: tensor of shape [batch_size] -> batchinfo of the train data
     :param reuse: True -> Reuse the discriminator variables,False -> Create or search of variables before creating
     :return: tensor of shape [batch_size, 1]
     """
-    '''
-    x_ = pd.DataFrame(x.numpy())
-    x_ = pd.concat([x_, batch], axis = 1)
-    x = torch.tensor(x.values)
-    x_dim = torch.tensor(721)
-    '''
     
     with tf.variable_scope('discriminatorB') as scope:
         if reuse:
@@ -519,6 +434,14 @@ def batchClassifier(self, z, z_dim, reuse = False):
 
 def classifier(self, z, reuse = True):
     
+    """
+    Classifier takes the latent space representation and try to differentiate between different cell types
+    :param z: tensor of shape [batch_size, z_dim]
+    :param batch: tensor of shape [batch_size] -> batchinfo of the train data
+    :param reuse: True -> Reuse the discriminator variables, False -> Create or search of variables before creating
+    :return: tensor of shape [batch_size, 1]
+    """
+        
     # 10 -> 128 -> 256-> 16
     with tf.variable_scope('classifier_Celltype') as scope:
         if reuse:
@@ -534,60 +457,127 @@ def classifier(self, z, reuse = True):
                       
     return out      
 
-def encoderU(self, z, reuse = False):
+def encoderY(self, z, reuse = False):
 
-    with tf.variable_scope('EncoderU') as scope:
+    """
+    Hierarchically stacked encoder network of VAE
+    
+    :param z: tensor to pass encoder shape 
+    :type z: tensor
+    :param reuse: reuse the weight of network(used at the time of building the network), defaults to False
+    :type reuse: bool, optional
+    """
+        
+    with tf.variable_scope('EncoderY') as scope:
         if reuse:
             scope.reuse_variables()
 
 
-    h = tf.nn.dropout(lrelu(dense(z, self.z_dim + self.N_celltype, self.g_h_dim[0], name='encu_h0_lin'), alpha=self.leak),
+    h = tf.nn.dropout(lrelu(dense(z, self.z_dim + self.N_celltype, self.g_h_dim[0], name='ency_h0_lin'), \
+                            alpha=self.leak),
                       keep_prob=self.keep_prob)                
 
     for i in range(1, self.num_layers):
+        
         print ("entering in for loop", i, " ",  self.g_h_dim[i - 1]," -- >", self.g_h_dim[i])
-        h = tf.nn.dropout(lrelu(dense(h, self.g_h_dim[i - 1], self.g_h_dim[i], name='encu_h' + str(i) + '_lin'),
+        h = tf.nn.dropout(lrelu(dense(h, self.g_h_dim[i - 1], self.g_h_dim[i], name='ency_h' + str(i) + '_lin'),
                   alpha=self.leak), keep_prob=self.keep_prob)                    
 
-    u_post_m = dense(h, self.g_h_dim[self.num_layers - 1], self.u_dim, name='encu_u_post_m' +
-                     str(self.num_layers) + '_lin')                
-    u_post_v = tf.exp(dense(h, self.g_h_dim[self.num_layers - 1], self.u_dim, name='encu_u_post_v' + 
+    y_post_m = dense(h, self.g_h_dim[self.num_layers - 1], self.y_dim, name='ency_y_post_m' +
+                     str(self.num_layers) + '_lin')     
+    
+    y_post_v = tf.exp(dense(h, self.g_h_dim[self.num_layers - 1], self.y_dim, name='ency_y_post_v' + 
                             str(self.num_layers) + '_lin'))
 
 
-    h = tf.nn.relu(dense(h, self.g_h_dim[self.num_layers - 1], self.u_dim, name='encu_h' + 
+    h = tf.nn.relu(dense(h, self.g_h_dim[self.num_layers - 1], self.y_dim, name='ency_h' + 
                          str(self.num_layers) + '_lin'))
                                         
                         
-    return h, u_post_m, u_post_v
+    return h, y_post_m, y_post_v
 
 
-def decoderU(self, u, reuse = False):
+def decoderY(self, y, reuse = False):
     
 
-    with tf.variable_scope('DecoderU') as scope:
+    """
+    Hierarchically stacked encoder network of VAE
+    
+    :param y: tensor to pass encoder shape 
+    :type y: tensor
+    :param reuse: reuse the weight of network(used at the time of building the network), defaults to False
+    :type reuse: bool, optional
+    """
+        
+    with tf.variable_scope('DecoderY') as scope:
         if reuse:
             scope.reuse_variables()
         
-    h = tf.nn.dropout(lrelu(dense(u , self.u_dim + self.N_celltype, 8, name = 'decu_lin'),alpha = self.leak), keep_prob = self.keep_prob)
-    #h = tf.nn.dropout(lrelu(dense(h, 8,10, name = 'decu_lin2'),alpha = self.leak), keep_prob = self.keep_prob)
+    h = tf.nn.dropout(lrelu(dense(y , self.y_dim + self.N_celltype, 8, name = 'decy_lin'),alpha = self.leak), keep_prob = self.keep_prob)
            
-    zconst_m = dense(h, 8, self.z_dim, name = 'decu_z_post_m')                
-    zconst_v = tf.exp(dense(h, 8, self.z_dim, name = 'decu_z_post_v')) #self.z_dim
+    zconst_m = dense(h, 8, self.z_dim, name = 'decy_z_post_m')                
+    zconst_v = tf.exp(dense(h, 8, self.z_dim, name = 'decy_z_post_v')) 
         
     return zconst_m, zconst_v
 
 
 class scDREAMER(object):
     
+    """
+    scDREAMER class parameter setting
+
+
+        :param batch: obs key containing the batch information
+        :type batch: string
+        :param cell_type: obs key containing the cell type information
+        :type cell_type: string
+        :param name: path to the AnnData(adata) object.
+            adata.X contains counts info. 
+            adata.obs contains batch and celltype info
+        :type name: AnnData
+        :param epoch: number of epoches to train the model, defaults to 300
+        :type epoch: int, optional
+        :param lr_ae: learning rate, defaults to 0.0007
+        :type lr_ae: float, optional
+        :param lr_bc: learning rate, defaults to 0.0007
+        :type lr_bc: float, optional
+        :param lr_dis: learning rate, defaults to 0.0007
+        :type lr_dis: float, optional
+        :param beta1: beta1, defaults to 0.9
+        :type beta1: float, optional
+        :param batch_size: batch size, defaults to 128
+        :type batch_size: int, optional
+        :param X_dim: Top heighly variable genes, defaults to 2000
+        :type X_dim: int, optional
+        :param z_dim: Embeddings dimention, defaults to 10
+        :type z_dim: int, optional
+        :param dataset_name: dataset name, defaults to "Pancreas"
+        :type dataset_name: str, optional
+        :param num_layers: number of hidden layers, defaults to 1
+        :type num_layers: int, optional
+        :param g_h_dim: neurons in encoder hidden layers (uses only num_layers), defaults to [512, 256, 0, 0]
+        :type g_h_dim: list, optional
+        :param d_h_dim: neurons in decoder hidden layers (uses only num_layers), defaults to [512, 256, 0, 0]
+        :type d_h_dim: list, optional
+        :param gen_activation: activation function, defaults to "sig"
+        :type gen_activation: str, optional
+        :param leak: leak, defaults to 0.2
+        :type leak: float, optional
+        :param keep_param: keep, defaults to 0.9
+        :type keep_param: float, optional
+        :param trans: translation, defaults to "sparse"
+        :type trans: str, optional
+        :param sampler: z sampler, defaults to "normal"
+        :type sampler: str, optional
+    """
+        
     def __init__(self, sess, batch, cell_type, plot_cell_type, name, epoch = 200,  
                  lr_ae = 0.0002, lr_dis = 0.0007,lr_bc=0.0007, beta1=0.9, 
                  batch_size=128, X_dim=2000, 
-                 z_dim=10, dataset_name='Pancreas',
-                 checkpoint_dir='checkpoint', sample_dir='samples', result_dir = 'result', num_layers = 2, 
+                 z_dim=10, dataset_name='Pancreas',  num_layers = 1, 
                  g_h_dim = [512, 256, 0, 0],d_h_dim = [512, 256, 0, 0], gen_activation = 'sig', leak = 0.2, 
                  keep_param = 0.9, trans = 'sparse',is_bn = False,
-                 g_iter = 2, lam=1.0, sampler = 'normal', shuffle_type = 1, sparseIP = 0):
+                 g_iter = 2, lam=1.0, sampler = 'normal'):
 
         self.sess = sess
         self.epoch = epoch
@@ -598,14 +588,11 @@ class scDREAMER(object):
         self.batch_size = batch_size
         self.X_dim = X_dim
         self.z_dim = z_dim
-        self.u_dim = 6
+        self.y_dim = 6
         self.dataset_name = dataset_name
-        self.checkpoint_dir = checkpoint_dir
-        self.sample_dir = sample_dir
-        self.result_dir = result_dir
         self.num_layers = num_layers
-        self.g_h_dim = g_h_dim  # Fully connected layers for Generator
-        self.d_h_dim = d_h_dim  # Fully connected layers for Discriminator
+        self.g_h_dim = g_h_dim  
+        self.d_h_dim = d_h_dim  
         self.gen_activation = gen_activation
         self.leak = leak
         self.keep_param = keep_param
@@ -621,8 +608,6 @@ class scDREAMER(object):
         self.plot_cell_type = plot_cell_type
         self.name = name
         self.batch = batch
-        self.shuffle_type = shuffle_type
-        self.sparseIP = sparseIP
         
         if self.trans == 'sparse':
             self.data_train, self.data_test, self.scale, self.labels_train, self.labels_test, \
@@ -630,7 +615,7 @@ class scDREAMER(object):
             self.labels_ground = load_gene_mtx(self.dataset_name, transform=False, count=False, \
                                                actv=self.gen_activation, batch = self.batch,\
                                                cell_type = self.cell_type, plot_cell_type = self.plot_cell_type,\
-                                               name = self.name, sparseIP = self.sparseIP)
+                                               name = self.name)
             
             self.N_batch = self.batch_train.shape[1]
             self.N_celltype = self.labels_enc.shape[1]
@@ -658,15 +643,14 @@ class scDREAMER(object):
     train_cluster = train_cluster
     encoder = encoder
     decoder = decoder
-    encoderU = encoderU
-    decoderU = decoderU
-    #classifier = classifier
+    encoderY = encoderY
+    decoderY = decoderY
+    classifier = classifier
     
     batchClassifier = batchClassifier
     discriminator2 = discriminator2
     
     eval_cluster_on_test = eval_cluster_on_test
-    # eval_cluster_on_test_ = eval_cluster_on_test_
     zinb_model = zinb_model
     
     

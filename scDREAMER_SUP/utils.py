@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+import scipy
 import tensorflow as tf2
 
 import tensorflow.compat.v1 as tf
@@ -18,22 +21,16 @@ def lrelu(x, alpha = 0.2, name='lrelu'):
 
 def dense(x, inp_dim, out_dim, name = 'dense'):
 
-    with tf.variable_scope(name, reuse=None): # earlier only tf
+    with tf.variable_scope(name, reuse=None): 
         weights = tf.get_variable("weights", shape=[inp_dim, out_dim],
-                                  initializer = tf2.initializers.GlorotUniform()) # contrib
+                                  initializer = tf2.initializers.GlorotUniform()) 
         
         bias = tf.get_variable("bias", shape=[out_dim], initializer = tf2.initializers.GlorotUniform())
-        
-        # initializer= tf2.initializers.GlorotUniform(); 
-        # same as Xavier's initializer; tf.contrib.layers.xavier_initializer()  
-        # initializer = tf.constant_initializer(0.0)
-        
+
         out = tf.add(tf.matmul(x, weights), bias, name = 'matmul')
         return out
 
 
-#AJ: 20 may
-# Zero-inflated negative binomial (ZINB) model is for modeling count variables with excessive zeros and it is usually for overdispersed count outcome variables.
 def zinb_model(self, x, mean, inverse_dispersion, logit, eps=1e-4): 
 
     # 1e8 should be of same dimensions as other parameters....                 
@@ -57,21 +54,19 @@ def zinb_model(self, x, mean, inverse_dispersion, logit, eps=1e-4):
 
 
 def eval_cluster_on_test(self,ep, name):
+    
     # Embedding points in the test data to the latent space
     inp_encoder = self.data_test
     labels_ = self.labels_enc
     labels = self.labels_test
     batch_label = self.batch_test
-            
-    #latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder, self.batch_input: batch_label, self.labels: labels_, self.keep_prob: 1.0})
     
     start = 0
-    end = 15000 # size of each pass
+    end = 15000 # Size of each pass
     latent_matrix = self.sess.run(self.z, feed_dict = {self.x_input: inp_encoder[start:end], self.batch_input:batch_label[start:end], self.labels: labels_[start:end], self.keep_prob: 1.0})
     
     while (end < len(inp_encoder)):
 
-        #print ("hi")
         start = end
         end = min(end + 15000, len(inp_encoder))
 
@@ -86,9 +81,9 @@ def eval_cluster_on_test(self,ep, name):
     Ann.obsm['final_embeddings'] = latent_matrix
     Ann.obs['group'] = self.labels_ground.values.copy() 
     
-    sc.pp.neighbors(Ann, use_rep = 'final_embeddings') #use_rep = 'final_embeddings'
+    sc.pp.neighbors(Ann, use_rep = 'final_embeddings') 
     sc.tl.umap(Ann)
-    img = sc.pl.umap(Ann, color = 'group', frameon = False) # cells
+    img = sc.pl.umap(Ann, color = 'group', frameon = False) 
     print(img)
     
     np.savetxt(name + '_latent_matrix_c' + str(ep) + '.csv', latent_matrix, delimiter=",")
@@ -108,7 +103,7 @@ def eval_cluster_on_test(self,ep, name):
     print('NMI = {}'. 
           format(NMI)) 
 
-def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, sparseIP, hvg=2000):
+def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, hvg=2000):
     
     print('Preprocessing...')
     Ann = sc.read_h5ad(data_path)
@@ -124,11 +119,11 @@ def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, sparseIP, hvg=2
         n_top_genes=hvg,
         batch_key=batch,
         subset=True)
-  
-    if (sparseIP == 1):
-        df_final = pd.DataFrame.sparse.from_spmatrix(Ann.X) # Lung, Simulation1, Simulation 2
+    
+    if (scipy.sparse.issparse(Ann.X)):        
+        df_final = pd.DataFrame.sparse.from_spmatrix(Ann.X)
     else:
-        df_final = pd.DataFrame(Ann.X) # Immune , Pan
+        df_final = pd.DataFrame(Ann.X)
 
     df_final = df_final.reset_index(drop = True)
     data = df_final.to_numpy()
@@ -136,27 +131,22 @@ def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, sparseIP, hvg=2
     if cell_type:
         labels = Ann.obs[cell_type].to_list()
 
-    #AJ: Convert to categorical instead of this...
-    t_ = Ann.obs[batch] #.to_list()
-    batch_info = np.array([[i] for i in t_]) # for other datasets
 
-    #batch_info = np.array(Ann.obs[batch].astype("category").reset_index(drop = True)).reshape(-1,1) 
+    t_ = Ann.obs[batch]
+    batch_info = np.array([[i] for i in t_])
+
     enc = OneHotEncoder(handle_unknown='ignore')
-    #batch_info_enc = enc.fit_transform(batch_info).toarray()
   
     enc.fit(batch_info.reshape(-1, 1))
     batch_info_enc = enc.transform(batch_info.reshape(-1, 1)).toarray()
-    
-    # Encoding of cell type information...
-    
-    exiting_label = [i for i in Ann.obs[cell_type].unique() if i != "NA"][0] #IMP
-    t_ = Ann.obs[cell_type].replace("NA", exiting_label) # IMP
+        
+    exiting_label = [i for i in Ann.obs[cell_type].unique() if i != "NA"][0] 
+    t_ = Ann.obs[cell_type].replace("NA", exiting_label) 
     
     cell_info = np.array([[i] for i in t_])
     enc.fit(cell_info.reshape(-1, 1))
     labels_enc = enc.transform(cell_info.reshape(-1, 1)).toarray()
     
-    #labels_na = Ann.obs["celltype_NA"]:IMP
     labels_na = Ann.obs[cell_type]
     labels_ground = Ann.obs[plot_cell_type]
     
@@ -166,9 +156,8 @@ def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, sparseIP, hvg=2
 def load_gene_mtx(dataset_name, name, transform = True, count = True, actv = 'sig', batch = "batch", cell_type = "cell type", plot_cell_type = "cell type", sparseIP = 0):
     
     print('Loading dataset')
-    #B = "tech"
-    #C = "celltype"
-    data, labels, batch_info_enc, batch_info, labels_enc, labels_na, labels_ground = read_h5ad(dataset_name, batch, cell_type, plot_cell_type, name, sparseIP)
+    data, labels, batch_info_enc, batch_info, labels_enc, labels_na, labels_ground =\
+    read_h5ad(dataset_name, batch, cell_type, plot_cell_type, name)
          
     if count == False:
         data = np.log2(data+1)

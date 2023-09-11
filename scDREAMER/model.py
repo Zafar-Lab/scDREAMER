@@ -325,7 +325,7 @@ def discriminator2(self, x, x_dim, reuse=False):
 
         output = dense(h, self.d_h_dim[0], 1, name='dis2_output')
         return output
-    
+
 
 def decoder(self, z, reuse=False):
     

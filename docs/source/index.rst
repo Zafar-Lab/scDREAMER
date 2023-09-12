@@ -38,6 +38,7 @@ Ajita Shree\*, Musale Krushna Pavan\*, Hamim Zafar. scDREAMER: atlas-level integ
 
    self
    installation
+   scDREAMER_Immune
    scDREAMER_Sup_runs
    scDREAMER
    scDREAMER_SUP

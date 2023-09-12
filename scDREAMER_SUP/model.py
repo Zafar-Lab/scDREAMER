@@ -8,7 +8,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 
 import numpy as np
-from utils import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
+from scDREAMER_SUP.utils import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
 import pandas as pd
 
 # Class Functions:
@@ -308,9 +308,9 @@ def encoder(self, x, reuse = False):
 
 
 def discriminator2(self, z, z_dim, reuse=False):  
-    
     """
     Discriminator that is used to match the input x with reconstructed x.
+    
     :param x: tensor of shape [batch_size, x_dim]
     :param reuse: True -> Reuse the discriminator variables,
                   False -> Create or search of variables before creating
@@ -392,6 +392,7 @@ def batchClassifier(self, z, z_dim, reuse = False):
     
     """
     batchClassifier takes the latent space representation and try to differentiate between different batches
+    
     :param z: tensor of shape [batch_size, z_dim]
     :param batch: tensor of shape [batch_size] -> batchinfo of the train data
     :param reuse: True -> Reuse the discriminator variables,False -> Create or search of variables before creating
@@ -436,6 +437,7 @@ def classifier(self, z, reuse = True):
     
     """
     Classifier takes the latent space representation and try to differentiate between different cell types
+    
     :param z: tensor of shape [batch_size, z_dim]
     :param batch: tensor of shape [batch_size] -> batchinfo of the train data
     :param reuse: True -> Reuse the discriminator variables, False -> Create or search of variables before creating
@@ -458,7 +460,6 @@ def classifier(self, z, reuse = True):
     return out      
 
 def encoderY(self, z, reuse = False):
-
     """
     Hierarchically stacked encoder network of VAE
     
@@ -498,8 +499,6 @@ def encoderY(self, z, reuse = False):
 
 
 def decoderY(self, y, reuse = False):
-    
-
     """
     Hierarchically stacked encoder network of VAE
     
@@ -521,11 +520,9 @@ def decoderY(self, y, reuse = False):
     return zconst_m, zconst_v
 
 
-class scDREAMER(object):
-    
+class scDREAMER_SUP(object):
     """
     scDREAMER class parameter setting
-
 
         :param batch: obs key containing the batch information
         :type batch: string

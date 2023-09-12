@@ -39,7 +39,8 @@ Ajita Shree\*, Musale Krushna Pavan\*, Hamim Zafar. scDREAMER: atlas-level integ
    self
    installation
    scDREAMER
-
+   scDREAMER_SUP
+   
 Indices and tables
 ==================
 

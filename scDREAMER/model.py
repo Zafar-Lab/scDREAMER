@@ -5,7 +5,7 @@ warnings.filterwarnings('ignore')
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 import numpy as np
-from utils import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
+from scDREAMER.utils import dense,lrelu,zinb_model,eval_cluster_on_test,load_gene_mtx
 import pandas as pd
 
 
@@ -287,9 +287,9 @@ def encoder(self, x, reuse = False):
 # -
 
 def discriminator2(self, x, x_dim, reuse=False):    
-    
     """
     Discriminator that is used to match the input x with reconstructed x.
+    
     :param x: tensor of shape [batch_size, x_dim]
     :param reuse: True -> Reuse the discriminator variables,
                   False -> Create or search of variables before creating
@@ -369,7 +369,6 @@ def decoder(self, z, reuse=False):
         return h
 
 def batchClassifier(self, z, z_dim, reuse = False):    
-    
     """
     batchClassifier takes the latent space representation and try to differentiate between different batches
     :param z: tensor of shape [batch_size, z_dim]

@@ -40,6 +40,7 @@ Ajita Shree\*, Musale Krushna Pavan\*, Hamim Zafar. scDREAMER: atlas-level integ
    installation
    scDREAMER_Immune
    scDREAMER_Sup_runs
+   scDREAMER_Sup_Healthy_Heart
    scDREAMER
    scDREAMER_SUP
    

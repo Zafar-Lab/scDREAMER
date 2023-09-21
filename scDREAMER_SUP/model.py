@@ -140,7 +140,7 @@ def build_model(self):
     self.dis2_vars = [var for var in t_vars if 'dis2_' in var.name]
     self.disb_vars = [var for var in t_vars if 'disb_' in var.name ]
     self.saver = tf.train.Saver()
-    
+
 
 def train_cluster(self):
 

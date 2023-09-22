@@ -1,7 +1,6 @@
-# +
 import warnings
 warnings.filterwarnings('ignore')
-
+import random
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior() 
 import numpy as np
@@ -142,17 +141,15 @@ def train_cluster(self):
     
     self.sess.run(tf.global_variables_initializer())
     
-    a_loss_epoch = []
-    d2_loss_epoch = [] # Discriminator D2
-    db_loss_epoch = [] # Discriminator batch
-
-
     num_batch_iter = self.total_size // self.batch_size
     indices = np.arange(self.data_train.shape[0])
     
     for ep in range(self.epoch):
     
-        d_loss_curr = g_loss_curr = a_loss_curr = np.inf
+        a_loss_epoch = []
+        d2_loss_epoch = []
+        db_loss_epoch = [] 
+        
         self._is_train = True
 
         if (self.shuffle_type == 1):
@@ -172,12 +169,11 @@ def train_cluster(self):
             elif (self.shuffle_type == 2):
                 batch_x, X_ = self.next_batch(self.data_train, self.batch_train, self.train_size)
 
-            df = pd.DataFrame(batch_x)
-            col = df.columns[:100] 
-            for c in col: 
-                df[c] = 0
+            batch_x_ = batch_x.copy()
+            rand_inx = random.sample(range(self.X_dim), int(0.2*self.X_dim))
+
+            batch_x_[:,rand_inx] = 0
             
-            batch_x_ = df.to_numpy()
             batch_z_real_dist = self.sample_Z(self.batch_size, self.z_dim)
 
             _, a_loss_curr = self.sess.run([autoencoder_optimizer, self.autoencoder_loss],
@@ -186,7 +182,6 @@ def train_cluster(self):
                                                       self.batch_input: X_,
                                                       self.keep_prob: self.keep_param}) 
   
-                           
             _, d2_loss_curr = self.sess.run([discriminator2_optimizer, self.dis2_loss],
                         feed_dict={self.x_input: batch_x,
                         self.x_target: batch_x,
@@ -203,18 +198,22 @@ def train_cluster(self):
                 self.x_input_: batch_x_, self.batch_input_: X_,
                 self.keep_prob: self.keep_param})
             
-            if (np.isnan(a_loss_curr) or np.isnan(db_loss_curr) or np.isnan(d2_loss_curr)):
-                a_loss_curr = 0
-                d2_loss_curr = 0
-                db_loss_curr = 0
-                break
-
             a_loss_epoch.append(a_loss_curr) # total loss getting appended 
             d2_loss_epoch.append(d2_loss_curr)
             db_loss_epoch.append(db_loss_curr)
+            
+            if (np.isnan(a_loss_curr) or np.isnan(db_loss_curr) or np.isnan(d2_loss_curr)):
+                print("Epoch : [%d] ,  a_loss = %.4f" #, d_loss: %.4f ,  db_loss: %.4f" 
+                 % (ep, np.mean(a_loss_epoch)))
+                break
 
         self._is_train = False # enables false after 1st iterations only...to make training process fast
         
+        if (np.isnan(a_loss_curr) or np.isnan(db_loss_curr) or np.isnan(d2_loss_curr)):
+                print("Epoch : [%d] ,  a_loss = %.4f" #, d_loss: %.4f ,  db_loss: %.4f" 
+                 % (ep, np.mean(a_loss_epoch)))#, np.mean(d2_loss_epoch), np.mean(db_loss_epoch)))
+                break
+                
         if (ep %10 == 0):
             print("Epoch : [%d] ,  a_loss = %.4f" #, d_loss: %.4f ,  db_loss: %.4f" 
              % (ep, np.mean(a_loss_epoch)))#, np.mean(d2_loss_epoch), np.mean(db_loss_epoch)))

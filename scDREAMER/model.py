@@ -170,7 +170,7 @@ def train_cluster(self):
                 batch_x, X_ = self.next_batch(self.data_train, self.batch_train, self.train_size)
 
             batch_x_ = batch_x.copy()
-            rand_inx = random.sample(range(self.X_dim), int(0.2*self.X_dim))
+            rand_inx = random.sample(range(self.X_dim), int(0.1*self.X_dim))
 
             batch_x_[:,rand_inx] = 0
             

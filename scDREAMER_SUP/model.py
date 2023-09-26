@@ -192,14 +192,12 @@ def train_cluster(self):
                     labels_n_ += [True]
                 
             labels_n_ = np.array(labels_n_)
-
-            df = pd.DataFrame(batch_x)
-            col = df.columns[:100] 
-            for c in col: 
-                df[c] = 0
             
-            batch_x_ = df.to_numpy()
+            batch_x_ = batch_x.copy()
+            rand_inx = random.sample(range(self.X_dim), int(0.1*self.X_dim))
 
+            batch_x_[:,rand_inx] = 0
+            
             # Random Sampling for the batch size...
             batch_z_real_dist = self.sample_Z(self.batch_size, self.z_dim)
 
@@ -228,25 +226,28 @@ def train_cluster(self):
                         self.batch_input: X_, # batch_b
                         self.x_input_: batch_x_, self.batch_input_: X_,
                         self.keep_prob: self.keep_param})
+            
+            a_loss_epoch.append(a_loss_curr) # total loss getting appended 
+            d2_loss_epoch.append(d2_loss_curr)
+            db_loss_epoch.append(db_loss_curr)
+            
+            if (np.isnan(a_loss_curr) or np.isnan(db_loss_curr) or np.isnan(d2_loss_curr)):
+                print("Epoch : [%d] ,  a_loss = %.4f" #, d_loss: %.4f ,  db_loss: %.4f" 
+                 % (ep, np.mean(a_loss_epoch)))
+                break
 
-        a_loss_epoch.append(a_loss_curr) 
-        d2_loss_epoch.append(d2_loss_curr)
-        db_loss_epoch.append(db_loss_curr)
-        
-        if (ep % 10 == 0):
-            print("Epoch : [%d] ,  a_loss = %.4f"#, d_loss: %.4f , db_loss: %.4f" 
-                  % (ep, np.mean(a_loss_epoch)))#, np.mean(d2_loss_epoch), np.mean(db_loss_epoch)))
-
-              
         self._is_train = False # enables false after 1st iterations only...to make training process fast
-
-        if (np.isnan(a_loss_curr) or np.isnan(d2_loss_curr) or np.isnan(db_loss_curr)): 
-            a_loss_curr = 0
-            d2_loss_curr = 0
-            db_loss_curr = 0
-            break
-
-    self.eval_cluster_on_test(ep, self.name)
+        
+        if (np.isnan(a_loss_curr) or np.isnan(db_loss_curr) or np.isnan(d2_loss_curr)):
+                print("Epoch : [%d] ,  a_loss = %.4f" #, d_loss: %.4f ,  db_loss: %.4f" 
+                 % (ep, np.mean(a_loss_epoch)))#, np.mean(d2_loss_epoch), np.mean(db_loss_epoch)))
+                break
+                
+        if (ep %10 == 0):
+            print("Epoch : [%d] ,  a_loss = %.4f" #, d_loss: %.4f ,  db_loss: %.4f" 
+             % (ep, np.mean(a_loss_epoch)))#, np.mean(d2_loss_epoch), np.mean(db_loss_epoch)))
+        
+    self.eval_cluster_on_test(self.epoch)
 
 def encoder(self, x, reuse = False):
     """

@@ -92,16 +92,6 @@ def eval_cluster_on_test(self,ep, name):
     img2 = sc.pl.umap(Ann, color = 'batch', frameon = False)
     print(img2)
 
-    K = np.size(np.unique(labels))   
-    kmeans = KMeans(n_clusters=K, random_state=0).fit(latent_matrix)
-    y_pred = kmeans.labels_
-
-    print('Computing NMI ...')
-    NMI = nmi(labels.flatten(), y_pred.flatten())
-    print('Done !')
-
-    print('NMI = {}'. 
-          format(NMI)) 
 
 def read_h5ad(data_path, batch, cell_type, plot_cell_type, name, hvg=2000):
     

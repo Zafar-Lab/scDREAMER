@@ -7,7 +7,7 @@ py-modules = ["scDREAMER"]
 
 [project]
 name = "scDREAMER"
-version = "0.0.2"
+version = "0.0.0"
 
 dependencies = [
     "scanpy",

@@ -22,7 +22,7 @@ copyright = '2023, Ajita Shree, Musale Krushna Pavan, Hamim Zafar'
 author = 'Ajita Shree, Musale Krushna Pavan, Hamim Zafar'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '0.0.0'
 
 
 # -- General configuration ---------------------------------------------------

@@ -1,8 +1,8 @@
 # scDREAMER
 ## Overview
-**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. The jupyter notebooks for reproducibility of results in the manuscript are available at [https://github.com/Zafar-Lab/scDREAMER-reproducibility](https://github.com/Zafar-Lab/scDREAMER-reproducibility). See our preprint below for more details. 
+**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. The jupyter notebooks for reproducibility of results in the manuscript are available at [https://github.com/Zafar-Lab/scDREAMER-reproducibility](https://github.com/Zafar-Lab/scDREAMER-reproducibility). See our paper below for more details. DOI: https://doi.org/10.1038/s41467-023-43590-8  
 
-<img src='architecture.png'>
+<img src='https://raw.githubusercontent.com/Zafar-Lab/scDREAMER/main/architecture.png'>
 
 
 ## Installation
@@ -38,5 +38,5 @@ Read the docs: [https://scdreamer.readthedocs.io/en/latest/](https://scdreamer.r
 In case of any bug reports, enhancement requests, general questions, and other contributions, please create an issue. For more substantial contributions, please fork this repo, push your changes to your fork, and submit a pull request with a good commit message.
 
 ## Cite this article
-Ajita Shree*, Musale Krushna Pavan*, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1101/2022.07.12.499846  
+Ajita Shree*, Musale Krushna Pavan*, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1038/s41467-023-43590-8  
 \* equally contributed

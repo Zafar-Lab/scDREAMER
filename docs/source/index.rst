@@ -9,7 +9,7 @@ Overview
 Welcome to scDREAMER's documentation!
 -------------------------------------
 
-**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. See our preprint `bioRxiv`_ for more details. 
+**scDREAMER** is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects. See our paper `NatureCommunications`_ for more details. 
 
 .. image:: ../../architecture.png
 
@@ -28,10 +28,10 @@ What Computational tasks can scDREAMER be used for?
 
 Cite this article
 -----------------
-Ajita Shree\*, Musale Krushna Pavan\*, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1101/2022.07.12.499846  
+Ajita Shree\*, Musale Krushna Pavan\*, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; DOI: https://doi.org/10.1038/s41467-023-43590-8  
 \* equally contributed
 
-.. _bioRxiv: https://www.biorxiv.org/content/10.1101/2022.07.12.499846v1
+.. _NatureCommunications: https://doi.org/10.1038/s41467-023-43590-8 
 
 .. toctree::
    :maxdepth: 2

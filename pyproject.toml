@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.setuptools]
+py-modules = ["scDREAMER"]
+
+[project]
+name = "scDREAMER"
+version = "0.0.2"
+
+dependencies = [
+    "scanpy",
+    "scikit-learn",
+    "scipy",
+    "tensorflow"
+]
+
+authors = [
+  { name="Ajita Shree", email="ajitashree@cse.iitk.ac.in" },
+  { name="Musale Krushna Pavan", email="krushna@cse.iitk.ac.in" },
+  { name="Hamim Zafar", email="hamim@cse.iitk.ac.in" },
+]
+description = "scDREAMER is a single-cell data integration framework that employs a novel adversarial variational autoencoder for learning lower-dimensional cellular embeddings and a batch classifier neural network for the removal of batch effects."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+DOI = "https://doi.org/10.1038/s41467-023-43590-8"
+Homepage = "https://github.com/Zafar-Lab/scDREAMER"
+Issues = "https://github.com/Zafar-Lab/scDREAMER/issues"

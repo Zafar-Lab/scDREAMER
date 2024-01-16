@@ -247,7 +247,7 @@ def train_cluster(self):
             print("Epoch : [%d] ,  a_loss = %.4f" #, d_loss: %.4f ,  db_loss: %.4f" 
              % (ep, np.mean(a_loss_epoch)))#, np.mean(d2_loss_epoch), np.mean(db_loss_epoch)))
         
-    self.eval_cluster_on_test(self.epoch)
+    self.eval_cluster_on_test(self.epoch, self.name)
 
 def encoder(self, x, reuse = False):
     """

@@ -38,5 +38,5 @@ Read the docs: [https://scdreamer.readthedocs.io/en/latest/](https://scdreamer.r
 In case of any bug reports, enhancement requests, general questions, and other contributions, please create an issue. For more substantial contributions, please fork this repo, push your changes to your fork, and submit a pull request with a good commit message.
 
 ## Cite this article
-Ajita Shree*, Musale Krushna Pavan*, Hamim Zafar. scDREAMER: atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier. bioRxiv 2022.07.12.499846; doi: https://doi.org/10.1038/s41467-023-43590-8  
+Ajita Shree*, Musale Krushna Pavan*, and Hamim Zafar. "scDREAMER for atlas-level integration of single-cell datasets using deep generative model paired with adversarial classifier." Nature Communications 14.1 (2023): 7781. doi: https://doi.org/10.1038/s41467-023-43590-8  
 \* equally contributed
